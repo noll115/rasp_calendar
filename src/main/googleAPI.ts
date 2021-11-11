@@ -23,7 +23,7 @@ class GoogleAPI {
   }
 
   private async startServer(authUrl: string) {
-    return new Promise<string>((resolve) => {
+    return new Promise<string>(resolve => {
       const server = http.createServer((req, res) => {
         if (req.url) {
           log.log(req.url);
@@ -35,7 +35,7 @@ class GoogleAPI {
             server.close();
           } else {
             res.writeHead(302, {
-              location: authUrl,
+              location: authUrl
             });
             res.end();
           }
@@ -50,12 +50,12 @@ class GoogleAPI {
   async getNewToken(oAuth2Client: OAuth2Client) {
     const authUrl = oAuth2Client.generateAuthUrl({
       access_type: 'offline',
-      scope: SCOPES,
+      scope: SCOPES
     });
     const ip = require('ip');
     this.mainWindow.webContents.send('onLogin', {
       loggedIn: false,
-      url: `${ip.address()}:${PORT}`,
+      url: `${ip.address()}:${PORT}`
     });
     const code = await this.startServer(authUrl);
     const r = await oAuth2Client.getToken(code);
@@ -92,7 +92,7 @@ class GoogleAPI {
       this.setupIPC();
     } catch (err) {}
     this.mainWindow.webContents.send('onLogin', {
-      loggedIn: true,
+      loggedIn: true
     });
   }
 
@@ -101,7 +101,7 @@ class GoogleAPI {
       const res = (
         await this.calendarAPI?.calendarList.list({
           fields:
-            'nextSyncToken,items(backgroundColor,foregroundColor,id,timeZone,selected)',
+            'nextSyncToken,items(backgroundColor,foregroundColor,id,timeZone,selected)'
         })!
       ).data;
       let calendars = res.items as CalendarJSON[];
@@ -120,13 +120,20 @@ class GoogleAPI {
             timeMin: beginMonth.toISOString(),
             timeMax: endMonth.toISOString(),
             fields:
-              'nextSyncToken,timeZone,items(id,summary,start(dateTime,date,timeZone),end(dateTime,date,timeZone),iCalUID,reminders/*)',
+              'nextSyncToken,timeZone,items(id,colorId,summary,start(dateTime,date,timeZone),end(dateTime,date,timeZone),iCalUID,reminders/*)'
           })!
         ).data;
+        const syncToken = eventsRes.nextSyncToken!;
         const calendarEvents = eventsRes.items!;
         calendar.events = calendarEvents;
       }
       return calendars;
+    });
+    ipcMain.handle('getCalendarColors', async () => {
+      let color = await (await this.calendarAPI?.colors.get({
+        fields: 'calendar,event'
+      }))!.data;
+      return color;
     });
   }
 }
