@@ -1,50 +1,68 @@
 import fs from 'fs/promises';
 import { calendar_v3, google } from 'googleapis';
-import path from 'path';
 import http from 'http';
 import log from 'electron-log';
 import { URL } from 'url';
 import { BrowserWindow, ipcMain } from 'electron';
-import { Credentials, OAuth2Client } from 'google-auth-library';
-import { CalendarJSON } from 'types';
+import { OAuth2Client } from 'google-auth-library';
+import { CalendarJSON, EventJson } from 'types';
+import { UserStore } from './userStore';
 
 const SCOPES = ['https://www.googleapis.com/auth/calendar.readonly'];
 
-const TOKEN_PATH = path.join(__dirname, 'token.json');
 const PORT = 4040;
 
 class GoogleAPI {
   mainWindow: BrowserWindow;
   oAuth2Client: OAuth2Client | undefined;
   calendarAPI: calendar_v3.Calendar | undefined;
-  constructor(mainWindow: BrowserWindow) {
+  store: UserStore;
+  tokenServer: http.Server | null = null;
+  getAssetPath: (path: string) => string;
+
+  constructor(
+    mainWindow: BrowserWindow,
+    store: UserStore,
+    getAssetPath: (path: string) => string
+  ) {
     this.mainWindow = mainWindow;
+    this.getAssetPath = getAssetPath;
+    this.store = store;
     this.createClient();
   }
 
   private async startServer(authUrl: string) {
-    return new Promise<string>(resolve => {
-      const server = http.createServer((req, res) => {
-        if (req.url) {
-          log.log(req.url);
-          const urlObj = new URL(req.url, `http://${req.headers.host}`);
-          const code = urlObj.searchParams.get('code');
-          if (code) {
-            resolve(code);
-            res.end('Done');
-            server.close();
-          } else {
-            res.writeHead(302, {
-              location: authUrl
-            });
-            res.end();
-          }
-        }
-      });
-      server.listen(PORT, () => {
-        log.log(`listening to ${PORT}`);
-      });
-    });
+    let closingServer: Promise<void> | null = null;
+    if (this.tokenServer) {
+      closingServer = new Promise(res => this.tokenServer!.close(() => res()));
+    }
+    return (closingServer ?? Promise.resolve()).then(
+      () =>
+        new Promise<string>(resolve => {
+          this.tokenServer = http.createServer((req, res) => {
+            if (req.url) {
+              log.log(req.url);
+              const urlObj = new URL(req.url, `http://${req.headers.host}`);
+              const code = urlObj.searchParams.get('code');
+              if (code) {
+                resolve(code);
+                res.end('Done');
+                this.tokenServer!.close(() => {
+                  this.tokenServer = null;
+                });
+              } else {
+                res.writeHead(302, {
+                  location: authUrl
+                });
+                res.end();
+              }
+            }
+          });
+          this.tokenServer.listen(PORT, () => {
+            log.log(`listening to ${PORT}`);
+          });
+        })
+    );
   }
 
   async getNewToken(oAuth2Client: OAuth2Client) {
@@ -59,30 +77,29 @@ class GoogleAPI {
     });
     const code = await this.startServer(authUrl);
     const r = await oAuth2Client.getToken(code);
-    await fs.writeFile(TOKEN_PATH, JSON.stringify(r.tokens));
+    this.store.set('googleCredentials', r.tokens);
     return r.tokens;
   }
 
   async createClient() {
     const content = await fs.readFile(
-      path.join(__dirname, 'client-secret.json'),
+      this.getAssetPath('client-secret.json'),
       'utf-8'
     );
-    // eslint-disable-next-line @typescript-eslint/naming-convention
+
     const { client_secret, client_id, redirect_uris } = JSON.parse(content);
     const oAuth2Client = new google.auth.OAuth2(
       client_id,
       client_secret,
       redirect_uris[1]
     );
-    let token: Credentials | null;
-    try {
-      let tokenStr = await fs.readFile(TOKEN_PATH, 'utf-8');
-      token = JSON.parse(tokenStr) as Credentials;
+
+    let token = this.store.get('googleCredentials');
+    if (token) {
       if (token.expiry_date! <= Date.now()) {
         token = await this.getNewToken(oAuth2Client);
       }
-    } catch (err) {
+    } else {
       token = await this.getNewToken(oAuth2Client);
     }
     oAuth2Client.setCredentials(token);
@@ -90,14 +107,53 @@ class GoogleAPI {
     this.calendarAPI = google.calendar({ version: 'v3', auth: oAuth2Client });
     try {
       this.setupIPC();
-    } catch (err) {}
+    } catch (err) {
+      console.error('IPCs already created');
+    }
     this.mainWindow.webContents.send('onLogin', {
       loggedIn: true
     });
   }
 
+  private async getEvents(
+    calendar: CalendarJSON,
+    beginMonth: Date,
+    endMonth: Date
+  ) {
+    const eventsRes = (
+      await this.calendarAPI?.events.list({
+        calendarId: calendar.id!,
+        singleEvents: true,
+        timeMin: beginMonth.toISOString(),
+        timeMax: endMonth.toISOString(),
+        fields:
+          'nextSyncToken,nextPageToken,timeZone,items(id,colorId,updated,summary,start(dateTime,date,timeZone),end(dateTime,date,timeZone),reminders/*)'
+      })!
+    ).data;
+    calendar.events = eventsRes.items! as EventJson[];
+    return [calendar.id!, eventsRes.nextSyncToken!];
+  }
+
+  private async getSyncEvents(
+    calendarId: string,
+    syncToken: string,
+    _beginMonth: Date,
+    _endMonth: Date
+  ): Promise<[string, string, calendar_v3.Schema$Event[]]> {
+    const eventsRes = (
+      await this.calendarAPI?.events.list({
+        calendarId: calendarId,
+        singleEvents: true,
+        syncToken,
+        fields:
+          'nextSyncToken,nextPageToken,timeZone,items(status,id,colorId,updated,summary,start(dateTime,date,timeZone),end(dateTime,date,timeZone),reminders/*)'
+      })!
+    ).data;
+    return [calendarId, eventsRes.nextSyncToken!, eventsRes.items!];
+  }
+
   private setupIPC() {
-    ipcMain.handle('getInitData', async () => {
+    ipcMain.handle('getData', async () => {
       const res = (
         await this.calendarAPI?.calendarList.list({
           fields:
@@ -105,28 +161,21 @@ class GoogleAPI {
         })!
       ).data;
       let calendars = res.items as CalendarJSON[];
+      const beginMonth = new Date();
+      beginMonth.setDate(1);
+      beginMonth.setHours(0, 0, 0, 0);
+      const endMonth = new Date();
+      endMonth.setMonth(beginMonth.getMonth() + 1);
+      endMonth.setDate(0);
+      let promises: Promise<string[]>[] = [];
       for (const calendar of calendars) {
-        const beginMonth = new Date();
-        beginMonth.setDate(1);
-        beginMonth.setHours(0, 0, 0, 0);
-        const endMonth = new Date();
-        endMonth.setMonth(beginMonth.getMonth() + 1);
-        endMonth.setDate(0);
-        const eventsRes = (
-          await this.calendarAPI?.events.list({
-            calendarId: calendar.id!,
-            singleEvents: true,
-            orderBy: 'startTime',
-            timeMin: beginMonth.toISOString(),
-            timeMax: endMonth.toISOString(),
-            fields:
-              'nextSyncToken,timeZone,items(id,colorId,summary,start(dateTime,date,timeZone),end(dateTime,date,timeZone),iCalUID,reminders/*)'
-          })!
-        ).data;
-        const syncToken = eventsRes.nextSyncToken!;
-        const calendarEvents = eventsRes.items!;
-        calendar.events = calendarEvents;
+        promises.push(this.getEvents(calendar, beginMonth, endMonth));
       }
+
+      let newSyncTokenStrings = await Promise.all(promises);
+      let tokenObj = Object.fromEntries(newSyncTokenStrings);
+      console.log(tokenObj);
+      this.store.set('syncTokens', tokenObj);
       return calendars;
     });
     ipcMain.handle('getCalendarColors', async () => {
@@ -134,6 +183,38 @@ class GoogleAPI {
         fields: 'calendar,event'
       }))!.data;
       return color;
+    });
+    ipcMain.handle('getEventRefresh', async () => {
+      const syncTokens = this.store.get('syncTokens');
+      const calendarIds = Object.keys(syncTokens);
+      const beginMonth = new Date();
+      beginMonth.setDate(1);
+      beginMonth.setHours(0, 0, 0, 0);
+      const endMonth = new Date();
+      endMonth.setMonth(beginMonth.getMonth() + 1);
+      endMonth.setDate(0);
+      endMonth.setHours(23);
+      console.log(beginMonth, endMonth);
+      let syncEvents: Promise<[string, string, calendar_v3.Schema$Event[]]>[] =
+        [];
+      for (const calendarId of calendarIds) {
+        const syncToken = syncTokens[calendarId];
+        syncEvents.push(
+          this.getSyncEvents(calendarId, syncToken, beginMonth, endMonth)
+        );
+      }
+      const res = await Promise.all(syncEvents);
+      const newSyncTokens = res.reduce((acc, val) => {
+        acc[val[0]] = val[1];
+        return acc;
+      }, {} as Record<string, string>);
+      this.store.set('syncTokens', newSyncTokens);
+      return res.reduce((acc, val) => {
+        if (val[2].length > 0) {
+          acc[val[0]] = val[2];
+        }
+        return acc;
+      }, {} as Record<string, calendar_v3.Schema$Event[]>);
     });
   }
 }

@@ -9,6 +9,17 @@
   min-height: 0;
   min-width: 0;
 
+  .date {
+    text-align: center;
+    width: 23px;
+    height: 23px;
+    margin-bottom: 3px;
+    &.current-day {
+      background-color: blue;
+      color: white;
+      border-radius: 50%;
+    }
+  }
   .events {
     font-size: 12px;
     height: 100%;

@@ -1,29 +1,16 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import { getMonthData, getTimeData, isFullDayEvent } from 'renderer/util';
 import {
+  Calendar,
   CalendarColors,
-  CalendarJSON,
+  Calendars,
   Event,
-  EventStatus,
-  MonthEvents
+  EventJson
 } from '../../../types/index';
 import './calendar.scss';
 import Day from './Day';
 
-const currentDate = new Date();
-const monthFormat = new Intl.DateTimeFormat('en-US', { month: 'long' });
-
-function getMonthData(year: number, month: number) {
-  const monthDate = new Date(year, month, 1);
-  const firstDay = monthDate.getDay();
-  monthDate.setMonth(monthDate.getMonth() + 1);
-  monthDate.setDate(0);
-  const numOfDays = monthDate.getDate();
-  return {
-    numOfDays,
-    firstDay,
-    name: monthFormat.format(monthDate)
-  };
-}
+const syncInterval = 1000 * 60 * 0.5;
 
 const days = [
   'Sunday',
@@ -35,151 +22,138 @@ const days = [
   'Saturday'
 ];
 
-const getEventStatus = (startTime: number, endTime: number): EventStatus => {
-  let currentTime = Date.now();
-  if (currentTime > startTime && currentTime < endTime) {
-    return 'during';
-  } else if (currentTime > endTime) {
-    return 'passed';
-  }
-  return 'future';
-};
-
 const getData = async () => {
-  const calendars = await window.api.getInitData();
-  const monthEvents: MonthEvents = {};
-  for (const calendar of calendars) {
-    for (let i = 0; i < calendar.events.length; i++) {
-      let eventJSON = calendar.events[i];
-      let event: Event | null = null;
-      if (eventJSON.start?.date && eventJSON.end?.date) {
-        const startDate = new Date(eventJSON.start.date);
-        const endDate = new Date(eventJSON.end.date);
-        const eventStatus = getEventStatus(
-          startDate.getTime(),
-          endDate.getTime()
-        );
-        event = {
-          ...eventJSON,
-          fullDay: true,
-          eventStatus,
-          calendarId: calendar.id!,
-          start: {
-            date: startDate
-          },
-          end: {
-            date: endDate
-          }
-        };
-      } else if (eventJSON.start?.dateTime && eventJSON.end?.dateTime) {
-        const startDate = new Date(eventJSON.start.dateTime);
-        const endDate = new Date(eventJSON.end.dateTime);
-        const eventStatus = getEventStatus(
-          startDate.getTime(),
-          endDate.getTime()
-        );
-        event = {
-          ...eventJSON,
-          fullDay: false,
-          calendarId: calendar.id!,
-          eventStatus,
-          start: {
-            dateTime: startDate
-          },
-          end: {
-            dateTime: endDate
-          }
-        };
-      }
-      if (event) {
-        if (event.fullDay) {
-          let start = event.start.date.getDate() + 1;
-          let end = event.start.date.getDate() + 1;
-          for (let day = start; day <= end; day++) {
-            monthEvents[day]
-              ? monthEvents[day].push(event)
-              : (monthEvents[day] = [event]);
-          }
-        } else {
-          let date = event.start.dateTime.getDate();
-          monthEvents[date]
-            ? monthEvents[date].push(event)
-            : (monthEvents[date] = [event]);
-        }
-      }
-    }
+  const calendarsJSON = await window.api.getData();
+  const calendars: Calendars = {};
+  for (const calendarJSON of calendarsJSON) {
+    calendars[calendarJSON.id!] = {
+      ...calendarJSON,
+      events: [],
+      eventsByDate: {}
+    };
+    calendarJSON.events.map(eventJSON => {
+      addEventToCalendar(
+        eventJSON,
+        calendarJSON.id!,
+        calendars[calendarJSON.id!]
+      );
+    });
   }
   console.log(calendars);
-  return { monthEvents, calendars };
+  return calendars;
 };
 
 const Calendar: React.FC = () => {
-  const [monthEvents, setMonthEvents] = useState<MonthEvents>({});
-  const [currentCals, setCurrentCals] = useState<CalendarJSON[]>([]);
-  const [monthData, _setMonthData] = useState(
-    getMonthData(currentDate.getFullYear(), currentDate.getMonth())
+  const [calendars, setCalendars] = useState<Calendars>({});
+  const [currentDate, setCurrentDate] = useState(new Date());
+  const [daysDivs, setdaysDiv] = useState<JSX.Element[]>([]);
+  const monthData = useMemo(
+    () => getMonthData(currentDate.getFullYear(), currentDate.getMonth()),
+    [currentDate.getFullYear(), currentDate.getMonth()]
   );
-  const [year, _setYear] = useState(currentDate.getFullYear().toString());
   const [calendarColors, setCalendarColors] = useState<CalendarColors>({
     calendar: {},
     event: {}
   });
 
   useEffect(() => {
+    let timer: NodeJS.Timer;
     (async () => {
-      let [{ calendars, monthEvents }, calendarColors] = await Promise.all([
+      let [calendars, calendarColors] = await Promise.all([
         getData(),
         window.api.getCalendarColors()
       ]);
-      setCurrentCals(calendars);
-      setMonthEvents(monthEvents);
+      setCalendars(calendars);
       setCalendarColors(calendarColors);
+      timer = setInterval(async () => {
+        let newCalendarEvents = await window.api.getEventRefresh();
+        console.log(newCalendarEvents);
+        const newDate = new Date();
+        if (Object.keys(newCalendarEvents).length > 0) {
+          setCalendars(prevCalendars => {
+            let dirty = false;
+            let newCalendars = { ...prevCalendars };
+            for (const calendarId in newCalendarEvents) {
+              let newEvents = newCalendarEvents[calendarId];
+              for (const newEvent of newEvents) {
+                const calendar = newCalendars[calendarId];
+                if (newEvent.status === 'cancelled') {
+                  calendar.events = calendar.events.filter(event => {
+                    if (event.id === newEvent.id) {
+                      dirty = true;
+                      const dates = event.dateIndexes;
+                      for (const date of dates) {
+                        calendar.eventsByDate[date] = calendar.eventsByDate[
+                          date
+                        ].filter(dateEvent => dateEvent.id !== event.id);
+                      }
+                      return false;
+                    }
+                    return true;
+                  });
+                } else {
+                  const eventJSON = newEvent;
+                  const changed = addEventToCalendar(
+                    eventJSON,
+                    calendarId,
+                    calendar,
+                    currentDate
+                  );
+                  dirty = dirty || changed;
+                }
+              }
+            }
+
+            return dirty ? newCalendars : prevCalendars;
+          });
+        }
+        setCurrentDate(newDate);
+      }, syncInterval);
     })();
+    return () => {
+      clearInterval(timer);
+    };
   }, []);
+  useEffect(() => {
+    console.log('render', daysDivs);
+    let monthStart = false;
+    let res: JSX.Element[] = [];
+    for (let i = 0; i < 7 * 5; i++) {
+      if (
+        i === monthData.firstDay ||
+        (monthStart && i <= monthData.numOfDays)
+      ) {
+        monthStart = true;
+        res.push(
+          <Day
+            key={i}
+            date={i}
+            isCurrentDay={i === currentDate.getDate()}
+            calendars={calendars}
+            getEventColor={getEventColor}
+          />
+        );
+      } else {
+        res.push(<Day key={i} getEventColor={getEventColor} />);
+      }
+    }
+    setdaysDiv(res);
+  }, [currentDate.getDate(), monthData, calendars]);
 
   const getEventColor = useCallback(
-    (event: Event) => {
-      let color = undefined;
-      let cal = null;
-      if ((cal = currentCals.find(cal => cal.id === event.calendarId))) {
-        color = cal.backgroundColor!;
-      }
-      if (event.colorId) {
-        color = calendarColors.event[event.colorId].background!;
-      }
-      return color;
+    (event: Event, calendars: Calendars) => {
+      return event.colorId
+        ? calendarColors.event[event.colorId].background!
+        : calendars[event.calendarId].backgroundColor!;
     },
     [calendarColors]
   );
 
-  // const _getCalendarColor = useCallback(
-  //   (colorId: string) => {
-  //     return calendarColors.event[colorId];
-  //   },
-  //   [calendarColors]
-  // );
-
-  const daysDivs: JSX.Element[] = [];
-  let monthStart = false;
-  for (let i = 0; i < 7 * 5; i++) {
-    if (i === monthData.firstDay || (monthStart && i <= monthData.numOfDays)) {
-      monthStart = true;
-      daysDivs.push(
-        <Day
-          key={i}
-          date={i}
-          events={monthEvents[i]}
-          getEventColor={getEventColor}
-        />
-      );
-    } else {
-      daysDivs.push(<Day key={i} getEventColor={getEventColor} />);
-    }
-  }
-
   return (
     <div className="calendar">
-      <div className="month-name">{`${monthData.name} ${year}`}</div>
+      <div className="month-name">{`${monthData.name} ${currentDate
+        .getFullYear()
+        .toString()}`}</div>
       <span className="grid">
         <div className="top-row">
           {days.map((day, i) => (
@@ -195,3 +169,70 @@ const Calendar: React.FC = () => {
 };
 
 export { Calendar };
+
+const addEventToCalendar = (
+  eventJSON: EventJson,
+  calendarId: string,
+  calendar: Calendar,
+  currentDate?: Date
+) => {
+  let { startDate, endDate } = getTimeData(eventJSON);
+  if (
+    currentDate !== undefined &&
+    currentDate.getMonth() !== startDate.getMonth()
+  ) {
+    return false;
+  }
+  let event: Event;
+  if (isFullDayEvent(eventJSON)) {
+    let dateIndexes: number[] = [];
+    let start = startDate.getDate() + 1;
+    let end = endDate.getDate() + 1;
+    for (let date = start; date < end; date++) {
+      dateIndexes.push(date);
+    }
+    event = {
+      ...eventJSON,
+      fullDay: true,
+      calendarId: calendarId,
+      dateIndexes,
+      start: {
+        date: startDate
+      },
+      end: {
+        date: endDate
+      }
+    };
+    for (const date of dateIndexes) {
+      calendar.eventsByDate[date]
+        ? calendar.eventsByDate[date].push(event)
+        : (calendar.eventsByDate[date] = [event]);
+    }
+  } else {
+    const date = startDate.getDate();
+    event = {
+      ...eventJSON,
+      fullDay: false,
+      calendarId: calendarId,
+      dateIndexes: [date],
+      start: {
+        dateTime: startDate
+      },
+      end: {
+        dateTime: endDate
+      }
+    };
+    calendar.eventsByDate[date]
+      ? calendar.eventsByDate[date].push(event)
+      : (calendar.eventsByDate[date] = [event]);
+  }
+  let index = -1;
+  if (
+    (index = calendar.events.findIndex(evnt => evnt.id === event.id)) !== -1
+  ) {
+    calendar.events[index] = event;
+  } else {
+    calendar.events.push(event);
+  }
+  return true;
+};
