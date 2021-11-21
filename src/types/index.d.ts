@@ -56,7 +56,7 @@ export interface EventsByDate {
 
 export interface Calendar extends calendar_v3.Schema$CalendarListEntry {
   eventsByDate: EventsByDate;
-  events: Event[];
+  totalEvents: Event[];
 }
 
 export interface Calendars {

@@ -1,11 +1,14 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { getMonthData, getTimeData, isFullDayEvent } from 'renderer/util';
+import {
+  createEvent,
+  getMonthData,
+  removeEventFromCalendar
+} from 'renderer/util';
 import {
   Calendar,
   CalendarColors,
   Calendars,
-  Event,
-  EventJson
+  Event
 } from '../../../types/index';
 import './calendar.scss';
 import Day from './Day';
@@ -26,18 +29,24 @@ const getData = async () => {
   const calendarsJSON = await window.api.getData();
   const calendars: Calendars = {};
   for (const calendarJSON of calendarsJSON) {
+    const totalEvents: Event[] = [];
+    const eventsByDate: Record<string, Event[]> = {};
+    calendarJSON.events.map(eventJSON => {
+      const newEvent = createEvent(eventJSON, calendarJSON.id!);
+      if (newEvent) {
+        totalEvents.push(newEvent);
+        for (const date of newEvent.dateIndexes) {
+          eventsByDate[date]
+            ? eventsByDate[date].push(newEvent)
+            : (eventsByDate[date] = [newEvent]);
+        }
+      }
+    });
     calendars[calendarJSON.id!] = {
       ...calendarJSON,
-      events: [],
-      eventsByDate: {}
+      totalEvents,
+      eventsByDate
     };
-    calendarJSON.events.map(eventJSON => {
-      addEventToCalendar(
-        eventJSON,
-        calendarJSON.id!,
-        calendars[calendarJSON.id!]
-      );
-    });
   }
   console.log(calendars);
   return calendars;
@@ -75,35 +84,48 @@ const Calendar: React.FC = () => {
             let newCalendars = { ...prevCalendars };
             for (const calendarId in newCalendarEvents) {
               let newEvents = newCalendarEvents[calendarId];
-              for (const newEvent of newEvents) {
-                const calendar = newCalendars[calendarId];
-                if (newEvent.status === 'cancelled') {
-                  calendar.events = calendar.events.filter(event => {
-                    if (event.id === newEvent.id) {
-                      dirty = true;
-                      const dates = event.dateIndexes;
-                      for (const date of dates) {
-                        calendar.eventsByDate[date] = calendar.eventsByDate[
-                          date
-                        ].filter(dateEvent => dateEvent.id !== event.id);
-                      }
-                      return false;
-                    }
-                    return true;
-                  });
+              const { totalEvents, eventsByDate, ...prevCalendarData } =
+                prevCalendars[calendarId];
+              const newCalendar = (newCalendars[calendarId] = {
+                ...prevCalendarData,
+                eventsByDate: { ...eventsByDate },
+                totalEvents: [...totalEvents]
+              });
+              for (const eventJSON of newEvents) {
+                if (eventJSON.status === 'cancelled') {
+                  dirty = removeEventFromCalendar(eventJSON.id!, newCalendar);
                 } else {
-                  const eventJSON = newEvent;
-                  const changed = addEventToCalendar(
+                  const newEvent = createEvent(
                     eventJSON,
                     calendarId,
-                    calendar,
-                    currentDate
+                    newDate.getMonth()
                   );
-                  dirty = dirty || changed;
+                  if (newEvent) {
+                    dirty = true;
+                    const index = newCalendar.totalEvents.findIndex(
+                      ({ id }) => id === newEvent.id
+                    );
+                    if (index !== -1) {
+                      const oldEvent = newCalendar.totalEvents[index];
+                      newCalendar.totalEvents[index] = newEvent;
+                      for (const date of oldEvent.dateIndexes) {
+                        const eventsForDate = newCalendar.eventsByDate[date];
+                        newCalendar.eventsByDate[date] = eventsForDate.filter(
+                          ({ id }) => id !== newEvent.id
+                        );
+                      }
+                    } else {
+                      newCalendar.totalEvents.push(newEvent);
+                    }
+                    for (const date of newEvent.dateIndexes) {
+                      newCalendar.eventsByDate[date]
+                        ? newCalendar.eventsByDate[date].push(newEvent)
+                        : (newCalendar.eventsByDate[date] = [newEvent]);
+                    }
+                  }
                 }
               }
             }
-
             return dirty ? newCalendars : prevCalendars;
           });
         }
@@ -169,70 +191,3 @@ const Calendar: React.FC = () => {
 };
 
 export { Calendar };
-
-const addEventToCalendar = (
-  eventJSON: EventJson,
-  calendarId: string,
-  calendar: Calendar,
-  currentDate?: Date
-) => {
-  let { startDate, endDate } = getTimeData(eventJSON);
-  if (
-    currentDate !== undefined &&
-    currentDate.getMonth() !== startDate.getMonth()
-  ) {
-    return false;
-  }
-  let event: Event;
-  if (isFullDayEvent(eventJSON)) {
-    let dateIndexes: number[] = [];
-    let start = startDate.getDate() + 1;
-    let end = endDate.getDate() + 1;
-    for (let date = start; date < end; date++) {
-      dateIndexes.push(date);
-    }
-    event = {
-      ...eventJSON,
-      fullDay: true,
-      calendarId: calendarId,
-      dateIndexes,
-      start: {
-        date: startDate
-      },
-      end: {
-        date: endDate
-      }
-    };
-    for (const date of dateIndexes) {
-      calendar.eventsByDate[date]
-        ? calendar.eventsByDate[date].push(event)
-        : (calendar.eventsByDate[date] = [event]);
-    }
-  } else {
-    const date = startDate.getDate();
-    event = {
-      ...eventJSON,
-      fullDay: false,
-      calendarId: calendarId,
-      dateIndexes: [date],
-      start: {
-        dateTime: startDate
-      },
-      end: {
-        dateTime: endDate
-      }
-    };
-    calendar.eventsByDate[date]
-      ? calendar.eventsByDate[date].push(event)
-      : (calendar.eventsByDate[date] = [event]);
-  }
-  let index = -1;
-  if (
-    (index = calendar.events.findIndex(evnt => evnt.id === event.id)) !== -1
-  ) {
-    calendar.events[index] = event;
-  } else {
-    calendar.events.push(event);
-  }
-  return true;
-};

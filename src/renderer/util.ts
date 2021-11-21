@@ -1,4 +1,4 @@
-import { Event, EventDateJson, EventJson, EventStatus } from 'types';
+import { Calendar, Event, EventDateJson, EventJson, EventStatus } from 'types';
 
 const monthFormat = new Intl.DateTimeFormat('en-US', { month: 'long' });
 
@@ -17,19 +17,6 @@ const getMonthData = (year: number, month: number) => {
 const isFullDayEvent = (event: EventJson): event is EventDateJson => {
   let { start, end } = event as EventDateJson;
   return start.date !== undefined && end.date !== undefined;
-};
-
-const getTimeData = (event: EventJson) => {
-  let startDate: Date;
-  let endDate: Date;
-  if (isFullDayEvent(event)) {
-    startDate = new Date(event.start.date);
-    endDate = new Date(event.end.date);
-  } else {
-    startDate = new Date(event.start.dateTime);
-    endDate = new Date(event.end.dateTime);
-  }
-  return { startDate, endDate };
 };
 
 const getEventStatus = (event: Event): EventStatus => {
@@ -55,4 +42,80 @@ const getEventStatus = (event: Event): EventStatus => {
   return 'future';
 };
 
-export { getTimeData, getEventStatus, isFullDayEvent, getMonthData };
+const createEvent = (
+  eventJSON: EventJson,
+  calendarId: string,
+  currentMonth?: number
+) => {
+  let newEvent: Event;
+  if (isFullDayEvent(eventJSON)) {
+    const startDate = new Date(eventJSON.start.date);
+    if (currentMonth && currentMonth !== startDate.getMonth()) {
+      return null;
+    }
+    const endDate = new Date(eventJSON.end.date);
+    let dateIndexes: number[] = [];
+    let start = startDate.getDate() + 1;
+    let end = endDate.getDate() + 1;
+    for (let date = start; date < end; date++) {
+      dateIndexes.push(date);
+    }
+    newEvent = {
+      ...eventJSON,
+      fullDay: true,
+      calendarId: calendarId,
+      dateIndexes,
+      start: {
+        date: startDate
+      },
+      end: {
+        date: endDate
+      }
+    };
+  } else {
+    const startDate = new Date(eventJSON.start.dateTime);
+    const endDate = new Date(eventJSON.end.dateTime);
+    if (currentMonth && currentMonth !== startDate.getMonth()) {
+      return null;
+    }
+    const date = startDate.getDate();
+    newEvent = {
+      ...eventJSON,
+      fullDay: false,
+      calendarId: calendarId,
+      dateIndexes: [date],
+      start: {
+        dateTime: startDate
+      },
+      end: {
+        dateTime: endDate
+      }
+    };
+  }
+  return newEvent;
+};
+
+const removeEventFromCalendar = (eventId: string, calendar: Calendar) => {
+  const { totalEvents, eventsByDate } = calendar;
+  const index = totalEvents.findIndex(evnt => {
+    console.log(eventId, evnt.id);
+    return evnt.id === eventId;
+  });
+  if (index !== -1) {
+    const [elem] = totalEvents.splice(index, 1);
+    for (const date of elem.dateIndexes) {
+      eventsByDate[date] = eventsByDate[date].filter(
+        dateEvent => dateEvent.id !== eventId
+      );
+    }
+  }
+  return index !== -1;
+};
+
+export {
+  createEvent,
+  getEventStatus,
+  isFullDayEvent,
+  getMonthData,
+  removeEventFromCalendar
+};
