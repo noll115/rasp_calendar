@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { getEventStatus } from 'renderer/util';
 import { Calendars, Event } from 'types';
 import './day.scss';
@@ -9,8 +9,10 @@ const getEventText = (event: Event) => {
     return <span className="summary">{summary}</span>;
   }
   let { dateTime } = event.start;
-  const hour = dateTime.getHours() % 13 ? dateTime.getHours() % 13 : 1;
-  const minute = dateTime.getMinutes() ? `:${dateTime.getMinutes()}` : '';
+  const hour = dateTime.getHours() % 12 ? dateTime.getHours() % 12 : 1;
+  const minute = dateTime.getMinutes()
+    ? ':' + String(dateTime.getMinutes()).padStart(2, '0')
+    : '';
   const postFix = dateTime.getHours() < 12 ? 'am' : 'pm';
   return (
     <>
@@ -24,18 +26,19 @@ interface Props {
   date?: number;
   calendars?: Calendars;
   isCurrentDay?: boolean;
+  time: Date;
   getEventColor(colorId: Event, calendar: Calendars): string | undefined;
 }
-
-const Day: React.FC<Props> = ({
+const _Day: React.FC<Props> = ({
   date,
   calendars,
   getEventColor,
-  isCurrentDay
+  isCurrentDay,
+  time
 }) => {
   const [daysEvents, setEvents] = useState<Event[]>([]);
   const eventsRef = useRef<HTMLDivElement>(null);
-
+  const currentEvent = useRef<HTMLDivElement>(null);
   useEffect(() => {
     if (date && calendars) {
       let events: Event[] = [];
@@ -63,13 +66,21 @@ const Day: React.FC<Props> = ({
     }
   }, [calendars, date]);
 
+  useEffect(() => {
+    if (currentEvent.current) {
+      currentEvent.current.scrollIntoView();
+    }
+  }, [daysEvents]);
+
   let eventDivs =
     calendars &&
     daysEvents.map((evnt, i) => {
       let backgroundColor = getEventColor(evnt, calendars);
+      const status = getEventStatus(evnt, time);
       return (
         <div
-          className={`event ${getEventStatus(evnt)}`}
+          className={`event ${status}`}
+          ref={status === 'during' && !evnt.fullDay ? currentEvent : undefined}
           style={{ backgroundColor }}
           key={i}
         >
@@ -89,5 +100,15 @@ const Day: React.FC<Props> = ({
     </div>
   );
 };
+
+const Day = React.memo(_Day, (prevProps, nextProps) => {
+  if (prevProps.calendars != nextProps.calendars) {
+    return false;
+  }
+  if (prevProps.isCurrentDay != nextProps.isCurrentDay) {
+    return false;
+  }
+  return !nextProps.isCurrentDay;
+});
 
 export { Day };

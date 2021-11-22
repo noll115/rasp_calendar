@@ -10,10 +10,12 @@
   min-width: 0;
 
   .date {
-    text-align: center;
-    width: 23px;
-    height: 23px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
     margin-bottom: 3px;
+    width: 24px;
+    height: 24px;
     &.current-day {
       background-color: blue;
       color: white;
@@ -22,7 +24,6 @@
   }
   .events {
     font-size: 12px;
-    height: 100%;
     width: 100%;
     overflow-y: auto;
     padding: 0px 5px;

@@ -55,7 +55,6 @@ const getData = async () => {
 const Calendar: React.FC = () => {
   const [calendars, setCalendars] = useState<Calendars>({});
   const [currentDate, setCurrentDate] = useState(new Date());
-  const [daysDivs, setdaysDiv] = useState<JSX.Element[]>([]);
   const monthData = useMemo(
     () => getMonthData(currentDate.getFullYear(), currentDate.getMonth()),
     [currentDate.getFullYear(), currentDate.getMonth()]
@@ -76,7 +75,6 @@ const Calendar: React.FC = () => {
       setCalendarColors(calendarColors);
       timer = setInterval(async () => {
         let newCalendarEvents = await window.api.getEventRefresh();
-        console.log(newCalendarEvents);
         const newDate = new Date();
         if (Object.keys(newCalendarEvents).length > 0) {
           setCalendars(prevCalendars => {
@@ -136,31 +134,6 @@ const Calendar: React.FC = () => {
       clearInterval(timer);
     };
   }, []);
-  useEffect(() => {
-    console.log('render', daysDivs);
-    let monthStart = false;
-    let res: JSX.Element[] = [];
-    for (let i = 0; i < 7 * 5; i++) {
-      if (
-        i === monthData.firstDay ||
-        (monthStart && i <= monthData.numOfDays)
-      ) {
-        monthStart = true;
-        res.push(
-          <Day
-            key={i}
-            date={i}
-            isCurrentDay={i === currentDate.getDate()}
-            calendars={calendars}
-            getEventColor={getEventColor}
-          />
-        );
-      } else {
-        res.push(<Day key={i} getEventColor={getEventColor} />);
-      }
-    }
-    setdaysDiv(res);
-  }, [currentDate.getDate(), monthData, calendars]);
 
   const getEventColor = useCallback(
     (event: Event, calendars: Calendars) => {
@@ -170,6 +143,29 @@ const Calendar: React.FC = () => {
     },
     [calendarColors]
   );
+
+  let monthStart = false;
+  let res: JSX.Element[] = [];
+  for (let i = 0; i < 7 * 5; i++) {
+    if (i === monthData.firstDay || (monthStart && i <= monthData.numOfDays)) {
+      monthStart = true;
+      const isCurrentDay = i === currentDate.getDate();
+      res.push(
+        <Day
+          key={i}
+          date={i}
+          isCurrentDay={isCurrentDay}
+          calendars={calendars}
+          getEventColor={getEventColor}
+          time={currentDate}
+        />
+      );
+    } else {
+      res.push(
+        <Day key={i} getEventColor={getEventColor} time={currentDate} />
+      );
+    }
+  }
 
   return (
     <div className="calendar">
@@ -184,7 +180,7 @@ const Calendar: React.FC = () => {
             </span>
           ))}
         </div>
-        {daysDivs}
+        {res}
       </span>
     </div>
   );

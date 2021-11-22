@@ -19,8 +19,7 @@ const isFullDayEvent = (event: EventJson): event is EventDateJson => {
   return start.date !== undefined && end.date !== undefined;
 };
 
-const getEventStatus = (event: Event): EventStatus => {
-  let currentTime = new Date();
+const getEventStatus = (event: Event, currentTime: Date): EventStatus => {
   let startTime: number;
   let endTime: number;
   if (event.fullDay) {
@@ -31,10 +30,10 @@ const getEventStatus = (event: Event): EventStatus => {
     return 'during';
   } else {
     startTime = event.start.dateTime.getTime();
-    endTime = event.start.dateTime.getTime();
+    endTime = event.end.dateTime.getTime();
   }
   const timeMS = currentTime.getTime();
-  if (timeMS > startTime && timeMS < endTime) {
+  if (startTime < timeMS && timeMS < endTime) {
     return 'during';
   } else if (timeMS > endTime) {
     return 'passed';
