@@ -33,6 +33,13 @@ const getEventStatus = (event: Event, currentTime: Date): EventStatus => {
     endTime = event.end.dateTime.getTime();
   }
   const timeMS = currentTime.getTime();
+  const { attendees } = event;
+  if (attendees) {
+    const attendee = attendees.find(att => att.email === event.calendarId);
+    if (attendee?.responseStatus == 'declined') {
+      return 'passed';
+    }
+  }
   if (startTime < timeMS && timeMS < endTime) {
     return 'during';
   } else if (timeMS > endTime) {
@@ -111,7 +118,18 @@ const removeEventFromCalendar = (eventId: string, calendar: Calendar) => {
   return index !== -1;
 };
 
+const getTimeText = (date: Date, includeMins?: boolean) => {
+  const hour = date.getHours() % 13 ? date.getHours() % 12 : 1;
+  const minute =
+    date.getMinutes() || includeMins
+      ? ':' + String(date.getMinutes()).padStart(2, '0')
+      : '';
+  const postFix = date.getHours() < 12 ? 'am' : 'pm';
+  return `${hour}${minute} ${postFix}`;
+};
+
 export {
+  getTimeText,
   createEvent,
   getEventStatus,
   isFullDayEvent,

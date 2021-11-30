@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { getEventStatus } from 'renderer/util';
+import { getEventStatus, getTimeText } from 'renderer/util';
 import { Calendars, Event } from 'types';
 import './day.scss';
 
@@ -9,14 +9,10 @@ const getEventText = (event: Event) => {
     return <span className="summary">{summary}</span>;
   }
   let { dateTime } = event.start;
-  const hour = dateTime.getHours() % 12 ? dateTime.getHours() % 12 : 1;
-  const minute = dateTime.getMinutes()
-    ? ':' + String(dateTime.getMinutes()).padStart(2, '0')
-    : '';
-  const postFix = dateTime.getHours() < 12 ? 'am' : 'pm';
+
   return (
     <>
-      <span className="time">{`${hour}${minute} ${postFix}`}</span>
+      <span className="time">{getTimeText(dateTime)}</span>
       <span className="summary">{summary}</span>
     </>
   );

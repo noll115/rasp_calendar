@@ -4,26 +4,11 @@ import {
   getMonthData,
   removeEventFromCalendar
 } from 'renderer/util';
-import {
-  Calendar,
-  CalendarColors,
-  Calendars,
-  Event
-} from '../../../types/index';
+import { CalendarColors, Calendars, Event } from '../../../types/index';
 import './calendar.scss';
-import Day from './Day';
+import { MonthView } from '../../components';
 
 const syncInterval = 1000 * 60 * 0.5;
-
-const days = [
-  'Sunday',
-  'Monday',
-  'Tuesday',
-  'Wednesday',
-  'Thursday',
-  'Friday',
-  'Saturday'
-];
 
 const getData = async () => {
   const calendarsJSON = await window.api.getData();
@@ -52,7 +37,7 @@ const getData = async () => {
   return calendars;
 };
 
-const Calendar: React.FC = () => {
+const CalendarPage: React.FC = () => {
   const [calendars, setCalendars] = useState<Calendars>({});
   const [currentDate, setCurrentDate] = useState(new Date());
   const monthData = useMemo(
@@ -144,46 +129,16 @@ const Calendar: React.FC = () => {
     [calendarColors]
   );
 
-  let monthStart = false;
-  let res: JSX.Element[] = [];
-  for (let i = 0; i < 7 * 5; i++) {
-    if (i === monthData.firstDay || (monthStart && i <= monthData.numOfDays)) {
-      monthStart = true;
-      const isCurrentDay = i === currentDate.getDate();
-      res.push(
-        <Day
-          key={i}
-          date={i}
-          isCurrentDay={isCurrentDay}
-          calendars={calendars}
-          getEventColor={getEventColor}
-          time={currentDate}
-        />
-      );
-    } else {
-      res.push(
-        <Day key={i} getEventColor={getEventColor} time={currentDate} />
-      );
-    }
-  }
-
   return (
     <div className="calendar">
-      <div className="month-name">{`${monthData.name} ${currentDate
-        .getFullYear()
-        .toString()}`}</div>
-      <span className="grid">
-        <div className="top-row">
-          {days.map((day, i) => (
-            <span className="day-name" key={i}>
-              {day}
-            </span>
-          ))}
-        </div>
-        {res}
-      </span>
+      <MonthView
+        getEventColor={getEventColor}
+        calendars={calendars}
+        currentDate={currentDate}
+        monthData={monthData}
+      />
     </div>
   );
 };
 
-export { Calendar };
+export { CalendarPage };

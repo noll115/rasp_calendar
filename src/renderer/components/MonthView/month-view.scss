@@ -1,0 +1,38 @@
+@import '../../constants.scss';
+
+.month-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 3rem;
+  font-size: 3rem;
+}
+.grid {
+  display: grid;
+  border-radius: 10px;
+  overflow: hidden;
+  gap: 1px;
+  background-color: $outline;
+  border: 1px $black-color solid;
+  grid-template-columns: repeat(7, 1fr);
+  grid-template-rows: max-content repeat(5, 1fr);
+  height: calc(100% - 4rem);
+  margin-top: 1rem;
+  box-shadow: 1px 8px 31px -2px rgba(0, 0, 0, 0.59);
+  -webkit-box-shadow: 1px 8px 31px -2px rgba(0, 0, 0, 0.59);
+  -moz-box-shadow: 1px 8px 31px -2px rgba(0, 0, 0, 0.59);
+  .top-row {
+    grid-column: 1 / span 7;
+    gap: 1px;
+    display: grid;
+    background-color: $outline;
+    grid-template-columns: repeat(7, 1fr);
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    font-weight: bold;
+    .day-name {
+      background-color: $base-color;
+    }
+  }
+}

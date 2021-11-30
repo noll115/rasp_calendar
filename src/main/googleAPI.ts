@@ -127,7 +127,7 @@ class GoogleAPI {
         timeMin: beginMonth.toISOString(),
         timeMax: endMonth.toISOString(),
         fields:
-          'nextSyncToken,nextPageToken,timeZone,items(id,colorId,updated,summary,start(dateTime,date,timeZone),end(dateTime,date,timeZone),reminders/*)'
+          'nextSyncToken,nextPageToken,timeZone,items(id,attendees(responseStatus,email),colorId,updated,summary,start(dateTime,date,timeZone),end(dateTime,date,timeZone),reminders/*)'
       })!
     ).data;
     calendar.events = eventsRes.items! as EventJson[];
@@ -146,7 +146,7 @@ class GoogleAPI {
         singleEvents: true,
         syncToken,
         fields:
-          'nextSyncToken,nextPageToken,timeZone,items(status,id,colorId,updated,summary,start(dateTime,date,timeZone),end(dateTime,date,timeZone),reminders/*)'
+          'nextSyncToken,nextPageToken,timeZone,items(status,attendees(responseStatus,email),id,colorId,updated,summary,start(dateTime,date,timeZone),end(dateTime,date,timeZone),reminders/*)'
       })!
     ).data;
     return [calendarId, eventsRes.nextSyncToken!, eventsRes.items!];
@@ -167,6 +167,9 @@ class GoogleAPI {
       const endMonth = new Date();
       endMonth.setMonth(beginMonth.getMonth() + 1);
       endMonth.setDate(0);
+      endMonth.setHours(24, 0, 0, 0);
+      console.log(beginMonth.toLocaleString(), endMonth.toLocaleString());
+
       let promises: Promise<string[]>[] = [];
       for (const calendar of calendars) {
         promises.push(this.getEvents(calendar, beginMonth, endMonth));
@@ -193,8 +196,8 @@ class GoogleAPI {
       const endMonth = new Date();
       endMonth.setMonth(beginMonth.getMonth() + 1);
       endMonth.setDate(0);
-      endMonth.setHours(23);
-      console.log(beginMonth, endMonth);
+      endMonth.setHours(24, 0, 0, 0);
+      console.log(beginMonth.toLocaleString(), endMonth.toLocaleString());
       let syncEvents: Promise<[string, string, calendar_v3.Schema$Event[]]>[] =
         [];
       for (const calendarId of calendarIds) {
