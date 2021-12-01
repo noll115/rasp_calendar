@@ -1,7 +1,6 @@
 import React from 'react';
 import { Calendars, Event } from 'types';
 import Day from '../Day';
-import { TimeDisplay } from '../TimeDisplay';
 import './month-view.scss';
 
 const days = [
@@ -50,24 +49,17 @@ const MonthView: React.FC<Props> = ({
     }
   }
 
-  const monthName = `${monthData.name} ${currentDate.getFullYear().toString()}`;
   return (
-    <>
-      <div className="month-header">
-        {monthName}
-        <TimeDisplay date={currentDate} />
+    <span className="grid">
+      <div className="top-row">
+        {days.map((day, i) => (
+          <span className="day-name" key={i}>
+            {day}
+          </span>
+        ))}
       </div>
-      <span className="grid">
-        <div className="top-row">
-          {days.map((day, i) => (
-            <span className="day-name" key={i}>
-              {day}
-            </span>
-          ))}
-        </div>
-        {res}
-      </span>
-    </>
+      {res}
+    </span>
   );
 };
 

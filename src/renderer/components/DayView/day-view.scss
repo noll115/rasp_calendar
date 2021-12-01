@@ -1,0 +1,93 @@
+.day-view {
+  display: flex;
+  height: 100%;
+  .events-presentation {
+    width: 50%;
+    display: grid;
+    grid-template-rows: repeat(24, 1fr);
+    grid-template-columns: 10% 1fr 1fr;
+    padding: 10px 0;
+    .hours {
+      grid-column: 1;
+      grid-row: 1/-1;
+      font-size: 12px;
+      display: grid;
+      grid-template-rows: repeat(24, 1fr);
+      grid-template-columns: 1fr;
+      padding-right: 10px;
+      .hour-wrap {
+        text-align: right;
+        display: flex;
+        flex-direction: column;
+        justify-content: flex-end;
+        .hour {
+          position: relative;
+          bottom: -25%;
+        }
+      }
+    }
+    .events {
+      grid-row: 1/-1;
+      grid-column: 2/4;
+      position: relative;
+      display: grid;
+      grid-auto-flow: column;
+      grid-template-columns: 1fr 1fr;
+      grid-template-rows: repeat(24, 1fr);
+      .time-line {
+        position: absolute;
+        width: 100%;
+        background-color: red;
+        height: 2px;
+        display: flex;
+        align-items: center;
+        &::before {
+          content: '';
+          width: 10px;
+          height: 10px;
+          left: -10px;
+          background-color: red;
+          display: inline-block;
+          position: absolute;
+        }
+      }
+    }
+
+    .vertical,
+    .horizontal {
+      position: relative;
+      opacity: 0.5;
+    }
+    .horizontal {
+      background-color: grey;
+      height: 1px;
+      align-self: flex-end;
+      bottom: -1px;
+      grid-column: 2/-1;
+      width: 102%;
+      left: -2%;
+    }
+    .vertical {
+      grid-row: 1/-1;
+      grid-column: 2/-1;
+      display: flex;
+      justify-content: center;
+      div {
+        width: 1px;
+        height: 100%;
+        background-color: grey;
+        bottom: -1%;
+        position: relative;
+      }
+      div:nth-child(2) {
+        position: absolute;
+        left: 0;
+      }
+    }
+  }
+  .event-desc {
+    margin-left: 10px;
+    flex: 1;
+    background-color: red;
+  }
+}

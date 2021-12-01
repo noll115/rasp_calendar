@@ -6,7 +6,7 @@ interface Props {
 }
 
 const TimeDisplay: React.FC<Props> = ({ date }) => {
-  const [timeStr, setTimeStr] = useState(``);
+  const [timeStr, setTimeStr] = useState('');
 
   useEffect(() => {
     setTimeStr(getTimeText(date, true).toLocaleUpperCase());

@@ -7,6 +7,13 @@ import {
 import { CalendarColors, Calendars, Event } from '../../../types/index';
 import './calendar.scss';
 import { MonthView } from '../../components';
+import { TimeDisplay } from 'renderer/components/TimeDisplay';
+import { DayView } from 'renderer/components/DayView';
+
+enum Views {
+  MONTH,
+  DAY
+}
 
 const syncInterval = 1000 * 60 * 0.5;
 
@@ -40,6 +47,7 @@ const getData = async () => {
 const CalendarPage: React.FC = () => {
   const [calendars, setCalendars] = useState<Calendars>({});
   const [currentDate, setCurrentDate] = useState(new Date());
+  const [currentView, _] = useState(Views.DAY);
   const monthData = useMemo(
     () => getMonthData(currentDate.getFullYear(), currentDate.getMonth()),
     [currentDate.getFullYear(), currentDate.getMonth()]
@@ -128,15 +136,30 @@ const CalendarPage: React.FC = () => {
     },
     [calendarColors]
   );
+  const monthName = `${monthData.name} ${currentDate.getFullYear().toString()}`;
 
   return (
     <div className="calendar">
-      <MonthView
-        getEventColor={getEventColor}
-        calendars={calendars}
-        currentDate={currentDate}
-        monthData={monthData}
-      />
+      <div className="calendar-header">
+        {monthName}
+        <TimeDisplay date={currentDate} />
+      </div>
+      <div className="calendar-body">
+        {currentView === Views.MONTH ? (
+          <MonthView
+            getEventColor={getEventColor}
+            calendars={calendars}
+            currentDate={currentDate}
+            monthData={monthData}
+          />
+        ) : (
+          <DayView
+            calendars={calendars}
+            time={currentDate}
+            getEventColor={getEventColor}
+          />
+        )}
+      </div>
     </div>
   );
 };
