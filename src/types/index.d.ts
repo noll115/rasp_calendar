@@ -23,14 +23,14 @@ export type IloggedIn =
       url: string;
     };
 
-export type EventStatus = 'future' | 'during' | 'passed' | 'cancelled';
+export type EventStatus = 'future' | 'current' | 'passed' | 'cancelled';
 
 interface EventBase extends Omit<calendar_v3.Schema$Event, 'start' | 'end'> {
   dateIndexes: number[];
   calendarId: string;
 }
 
-interface EventDate {
+interface EventDateBase {
   fullDay: true;
   start: {
     date: Date;
@@ -38,7 +38,7 @@ interface EventDate {
   end: { date: Date };
 }
 
-interface EventDateTime {
+interface EventDateTimeBase {
   fullDay: false;
   start: {
     dateTime: Date;
@@ -47,8 +47,9 @@ interface EventDateTime {
     dateTime: Date;
   };
 }
-
-export type Event = EventBase & (EventDateTime | EventDate);
+export type EventDate = EventBase & EventDateBase;
+export type EventDateTime = EventBase & EventDateTimeBase;
+export type Event = EventBase & (EventDateTimeBase | EventDateBase);
 
 export interface EventsByDate {
   [index: number]: Event[];

@@ -27,7 +27,7 @@ const getEventStatus = (event: Event, currentTime: Date): EventStatus => {
     let end = event.start.date.getDate() + 1;
     if (currentTime.getDate() < start) return 'future';
     if (currentTime.getDate() > end) return 'passed';
-    return 'during';
+    return 'current';
   } else {
     startTime = event.start.dateTime.getTime();
     endTime = event.end.dateTime.getTime();
@@ -41,7 +41,7 @@ const getEventStatus = (event: Event, currentTime: Date): EventStatus => {
     }
   }
   if (startTime < timeMS && timeMS < endTime) {
-    return 'during';
+    return 'current';
   } else if (timeMS > endTime) {
     return 'passed';
   }

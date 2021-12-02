@@ -60,7 +60,7 @@
         text-decoration: line-through;
         animation: fadeInPassed 1s forwards;
       }
-      &.during {
+      &.current {
         border: $black-color solid 1px;
       }
     }

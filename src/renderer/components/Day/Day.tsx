@@ -23,7 +23,7 @@ interface Props {
   calendars?: Calendars;
   isCurrentDay?: boolean;
   time: Date;
-  getEventColor(colorId: Event, calendar: Calendars): string | undefined;
+  getEventColor(colorId: Event): string;
 }
 const _Day: React.FC<Props> = ({
   date,
@@ -71,12 +71,12 @@ const _Day: React.FC<Props> = ({
   let eventDivs =
     calendars &&
     daysEvents.map((evnt, i) => {
-      let backgroundColor = getEventColor(evnt, calendars);
+      let backgroundColor = getEventColor(evnt);
       const status = getEventStatus(evnt, time);
       return (
         <div
           className={`event ${status}`}
-          ref={status === 'during' && !evnt.fullDay ? currentEvent : undefined}
+          ref={status === 'current' && !evnt.fullDay ? currentEvent : undefined}
           style={{ backgroundColor }}
           key={i}
         >

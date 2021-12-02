@@ -1,5 +1,6 @@
-import React, { useEffect, useRef, useState } from 'react';
-import { Calendars, Event } from 'types';
+import React, { useEffect, useState } from 'react';
+import { getEventStatus, getTimeText } from 'renderer/util';
+import { Calendars, Event, EventDate, EventDateTime } from 'types';
 import './day-view.scss';
 
 const hrs: string[] = [];
@@ -10,29 +11,156 @@ for (const postFix of ['am', 'pm']) {
   }
 }
 
-const EventDesc: React.FC = () => {
-  return <div className="event-desc"></div>;
+interface EventDescProps {
+  events: Event[];
+  time: Date;
+  dayData: DayData;
+  getEventColor(event: Event): string;
+}
+
+const EventDesc: React.FC<EventDescProps> = ({
+  time,
+  events,
+  getEventColor
+}) => {
+  const [allDayEvents, setAllDayEvents] = useState<EventDate[]>([]);
+
+  useEffect(() => {
+    const allDayEvents = events.filter(event => event.fullDay) as EventDate[];
+    setAllDayEvents(allDayEvents);
+  }, [time.getDate(), events]);
+
+  const currentEvents = events.filter(
+    event => getEventStatus(event, time) == 'current'
+  );
+
+  const futureEvent = events.find(
+    event => getEventStatus(event, time) === 'future'
+  );
+  if (allDayEvents.length === 0 && currentEvents.length === 0 && !futureEvent) {
+    return <div className="event-desc no-events">You're done for the day!</div>;
+  }
+
+  return (
+    <div className="event-desc">
+      {allDayEvents.length > 0 && (
+        <div className="all-day-events">
+          {allDayEvents.map(event => {
+            return <div>{event.summary}</div>;
+          })}
+        </div>
+      )}
+      {currentEvents.length > 0 && (
+        <div className="current-events">
+          {currentEvents.map(event => {
+            const backgroundColor = getEventColor(event);
+            return <div style={{ backgroundColor }}>{event.summary}</div>;
+          })}
+        </div>
+      )}
+      {futureEvent && <div className="future-event"></div>}
+    </div>
+  );
 };
 
-const EventGrid: React.FC<{ events: Event[]; time: Date; dayData: DayData }> =
-  ({ time, dayData }) => {
-    const eventsRef = useRef<HTMLDivElement>(null);
-    const [_height, setHeight] = useState(0);
+const EventList: React.FC<{
+  dayData: DayData;
+  dayEndTime: number;
+  events: EventDateTime[];
+  time: Date;
+  getEventColor(event: Event): string;
+}> = ({ events, getEventColor, dayData, dayEndTime, time }) => {
+  return (
+    <>
+      {events.map((event, i) => {
+        const startTime = event.start.dateTime.getTime() - dayData.startOfDay;
+        const endTime = event.end.dateTime.getTime() - dayData.startOfDay;
 
-    const progress =
-      (time.getTime() - dayData.startOfDay) /
-      (dayData.endOfDay - dayData.startOfDay);
+        const startPos = (startTime / dayEndTime) * 100;
+        const endPos = 100 - (endTime / dayEndTime) * 100;
+        const endTimeTxt = getTimeText(event.end.dateTime);
+        let startTimeTxt = getTimeText(event.start.dateTime);
+        const samePostFix =
+          endTimeTxt.includes('pm') === startTimeTxt.includes('pm');
+        startTimeTxt = samePostFix
+          ? startTimeTxt.substring(0, startTimeTxt.length - 3)
+          : startTimeTxt;
+        const timeText = `${startTimeTxt} - ${endTimeTxt}`;
+        const status = getEventStatus(event, time);
+        const backgroundColor = getEventColor(event);
+        return (
+          <div
+            key={i}
+            className={`event ${status}`}
+            style={{
+              top: `${startPos}%`,
+              bottom: `${endPos}%`,
+              backgroundColor
+            }}
+          >
+            <span className="time">{timeText}</span>
+            <span>{event.summary}</span>
+          </div>
+        );
+      })}
+    </>
+  );
+};
 
-    useEffect(() => {
-      if (eventsRef.current) setHeight(eventsRef.current.clientHeight);
-    });
+interface EventGridProps {
+  events: Event[];
+  time: Date;
+  dayData: DayData;
+  getEventColor(event: Event): string;
+}
 
-    return (
-      <div className="events" ref={eventsRef}>
-        <div className="time-line" style={{ top: `${progress * 100}%` }}></div>
+const EventGrid: React.FC<EventGridProps> = ({
+  time,
+  dayData,
+  events,
+  getEventColor
+}) => {
+  const currentTime = time.getTime() - dayData.startOfDay;
+  const dayEndTime = dayData.endOfDay - dayData.startOfDay;
+  const progress = currentTime / dayEndTime;
+  console.log(events);
+  const eventCols: Record<1 | 2, EventDateTime[]> = { 1: [], 2: [] };
+  events.forEach(event => {
+    if (!event.fullDay) {
+      const startTime = event.start.dateTime.getTime();
+      const endTime = event.end.dateTime.getTime();
+      const overLapping = eventCols[1].some(otherEvent => {
+        const otherStartTime = otherEvent.start.dateTime.getTime();
+        const otherEndTime = otherEvent.end.dateTime.getTime();
+        return otherStartTime >= startTime || endTime <= otherEndTime;
+      });
+      overLapping ? eventCols[2].push(event) : eventCols[1].push(event);
+    }
+  });
+  return (
+    <div className="events">
+      <div className="time-line" style={{ top: `${progress * 100}%` }} />
+      <div className="col2">
+        <EventList
+          getEventColor={getEventColor}
+          dayData={dayData}
+          dayEndTime={dayEndTime}
+          events={eventCols[2]}
+          time={time}
+        />
       </div>
-    );
-  };
+      <div className="col1">
+        <EventList
+          getEventColor={getEventColor}
+          dayData={dayData}
+          dayEndTime={dayEndTime}
+          events={eventCols[1]}
+          time={time}
+        />
+      </div>
+    </div>
+  );
+};
 
 interface DayData {
   startOfDay: number;
@@ -42,11 +170,11 @@ interface DayData {
 interface Props {
   calendars: Calendars;
   time: Date;
-  getEventColor(colorId: Event, calendar: Calendars): string | undefined;
+  getEventColor(colorId: Event): string;
 }
 
-const DayView: React.FC<Props> = ({ calendars, time }) => {
-  const [events, setEvents] = useState<Event[]>([]);
+const DayView: React.FC<Props> = ({ calendars, time, getEventColor }) => {
+  const [events, setEvents] = useState<Event[] | null>(null);
   const [dayData, setDayData] = useState<DayData | null>(null);
   const date = time.getDate();
   useEffect(() => {
@@ -84,6 +212,10 @@ const DayView: React.FC<Props> = ({ calendars, time }) => {
     });
   }, [date, calendars]);
 
+  if (!dayData || !events) {
+    return null;
+  }
+
   return (
     <div className="day-view">
       <div className="events-presentation">
@@ -99,11 +231,20 @@ const DayView: React.FC<Props> = ({ calendars, time }) => {
         ))}
         <div className="vertical">
           <div></div>
-          <div></div>
         </div>
-        {dayData && <EventGrid events={events} time={time} dayData={dayData} />}
+        <EventGrid
+          events={events}
+          time={time}
+          dayData={dayData}
+          getEventColor={getEventColor}
+        />
       </div>
-      <EventDesc />
+      <EventDesc
+        events={events}
+        time={time}
+        dayData={dayData}
+        getEventColor={getEventColor}
+      />
     </div>
   );
 };

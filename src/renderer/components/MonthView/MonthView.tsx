@@ -17,7 +17,7 @@ interface Props {
   monthData: { numOfDays: number; firstDay: number; name: string };
   calendars: Calendars;
   currentDate: Date;
-  getEventColor(event: Event, calendars: Calendars): string;
+  getEventColor(event: Event): string;
 }
 
 const MonthView: React.FC<Props> = ({

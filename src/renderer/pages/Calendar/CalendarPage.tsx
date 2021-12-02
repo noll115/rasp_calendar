@@ -129,12 +129,12 @@ const CalendarPage: React.FC = () => {
   }, []);
 
   const getEventColor = useCallback(
-    (event: Event, calendars: Calendars) => {
+    (event: Event) => {
       return event.colorId
         ? calendarColors.event[event.colorId].background!
         : calendars[event.calendarId].backgroundColor!;
     },
-    [calendarColors]
+    [calendarColors, calendars]
   );
   const monthName = `${monthData.name} ${currentDate.getFullYear().toString()}`;
 
