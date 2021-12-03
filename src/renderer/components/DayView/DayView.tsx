@@ -66,45 +66,50 @@ const EventDesc: React.FC<EventDescProps> = ({
 const EventList: React.FC<{
   dayData: DayData;
   dayEndTime: number;
-  events: EventDateTime[];
+  events: EventDateTime[][];
   time: Date;
   getEventColor(event: Event): string;
 }> = ({ events, getEventColor, dayData, dayEndTime, time }) => {
-  return (
-    <>
-      {events.map((event, i) => {
-        const startTime = event.start.dateTime.getTime() - dayData.startOfDay;
-        const endTime = event.end.dateTime.getTime() - dayData.startOfDay;
+  const eventDivs: JSX.Element[] = [];
+  console.log(events);
+  events.forEach(eventRow => {
+    for (let i = 0; i < eventRow.length; i++) {
+      const event = eventRow[i];
+      const startTime = event.start.dateTime.getTime() - dayData.startOfDay;
+      const endTime = event.end.dateTime.getTime() - dayData.startOfDay;
 
-        const startPos = (startTime / dayEndTime) * 100;
-        const endPos = 100 - (endTime / dayEndTime) * 100;
-        const endTimeTxt = getTimeText(event.end.dateTime);
-        let startTimeTxt = getTimeText(event.start.dateTime);
-        const samePostFix =
-          endTimeTxt.includes('pm') === startTimeTxt.includes('pm');
-        startTimeTxt = samePostFix
-          ? startTimeTxt.substring(0, startTimeTxt.length - 3)
-          : startTimeTxt;
-        const timeText = `${startTimeTxt} - ${endTimeTxt}`;
-        const status = getEventStatus(event, time);
-        const backgroundColor = getEventColor(event);
-        return (
-          <div
-            key={i}
-            className={`event ${status}`}
-            style={{
-              top: `${startPos}%`,
-              bottom: `${endPos}%`,
-              backgroundColor
-            }}
-          >
-            <span className="time">{timeText}</span>
-            <span>{event.summary}</span>
-          </div>
-        );
-      })}
-    </>
-  );
+      const startPos = (startTime / dayEndTime) * 100;
+      const endPos = 100 - (endTime / dayEndTime) * 100;
+      const endTimeTxt = getTimeText(event.end.dateTime);
+      let startTimeTxt = getTimeText(event.start.dateTime);
+      const samePostFix =
+        endTimeTxt.includes('pm') === startTimeTxt.includes('pm');
+      startTimeTxt = samePostFix
+        ? startTimeTxt.substring(0, startTimeTxt.length - 3)
+        : startTimeTxt;
+      const timeText = `${startTimeTxt} - ${endTimeTxt}`;
+      const status = getEventStatus(event, time);
+      const backgroundColor = getEventColor(event);
+      const onlyEvent = eventRow.length === 1;
+      const gridColumn = onlyEvent ? undefined : `${i + 1}/${i + 1}`;
+      eventDivs.push(
+        <div
+          key={event.id}
+          className={`event ${status}`}
+          style={{
+            top: `${startPos}%`,
+            bottom: `${endPos}%`,
+            backgroundColor,
+            gridColumn
+          }}
+        >
+          <span className="time">{timeText}</span>
+          <span>{event.summary}</span>
+        </div>
+      );
+    }
+  });
+  return <>{eventDivs}</>;
 };
 
 interface EventGridProps {
@@ -124,40 +129,36 @@ const EventGrid: React.FC<EventGridProps> = ({
   const dayEndTime = dayData.endOfDay - dayData.startOfDay;
   const progress = currentTime / dayEndTime;
   console.log(events);
-  const eventCols: Record<1 | 2, EventDateTime[]> = { 1: [], 2: [] };
+  const eventCols: EventDateTime[][] = [];
   events.forEach(event => {
     if (!event.fullDay) {
       const startTime = event.start.dateTime.getTime();
       const endTime = event.end.dateTime.getTime();
-      const overLapping = eventCols[1].some(otherEvent => {
+      const overLapping = eventCols.some(eventRow => {
+        const otherEvent = eventRow[0];
         const otherStartTime = otherEvent.start.dateTime.getTime();
         const otherEndTime = otherEvent.end.dateTime.getTime();
-        return otherStartTime >= startTime || endTime <= otherEndTime;
+        const overlap = otherStartTime >= startTime || endTime <= otherEndTime;
+        if (overlap) {
+          eventRow.push(event);
+        }
+        return overlap;
       });
-      overLapping ? eventCols[2].push(event) : eventCols[1].push(event);
+      if (!overLapping) {
+        eventCols.push([event]);
+      }
     }
   });
   return (
     <div className="events">
+      <EventList
+        getEventColor={getEventColor}
+        dayData={dayData}
+        dayEndTime={dayEndTime}
+        events={eventCols}
+        time={time}
+      />
       <div className="time-line" style={{ top: `${progress * 100}%` }} />
-      <div className="col2">
-        <EventList
-          getEventColor={getEventColor}
-          dayData={dayData}
-          dayEndTime={dayEndTime}
-          events={eventCols[2]}
-          time={time}
-        />
-      </div>
-      <div className="col1">
-        <EventList
-          getEventColor={getEventColor}
-          dayData={dayData}
-          dayEndTime={dayEndTime}
-          events={eventCols[1]}
-          time={time}
-        />
-      </div>
     </div>
   );
 };
