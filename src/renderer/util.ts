@@ -20,18 +20,15 @@ const isFullDayEvent = (event: EventJson): event is EventDateJson => {
 };
 
 const getEventStatus = (event: Event, currentTime: Date): EventStatus => {
-  let startTime: number;
-  let endTime: number;
   if (event.fullDay) {
     let start = event.start.date.getDate() + 1;
     let end = event.start.date.getDate() + 1;
     if (currentTime.getDate() < start) return 'future';
     if (currentTime.getDate() > end) return 'passed';
     return 'current';
-  } else {
-    startTime = event.start.dateTime.getTime();
-    endTime = event.end.dateTime.getTime();
   }
+  const startTime = event.start.dateTime.getTime();
+  const endTime = event.end.dateTime.getTime();
   const timeMS = currentTime.getTime();
   const { attendees } = event;
   if (attendees) {
@@ -118,17 +115,28 @@ const removeEventFromCalendar = (eventId: string, calendar: Calendar) => {
   return index !== -1;
 };
 
-const getTimeText = (date: Date, includeMins?: boolean) => {
+const getTimeText = (date: Date, alwaysIncludeMin?: boolean) => {
   const hour = date.getHours() <= 12 ? date.getHours() : date.getHours() - 12;
   const minute =
-    date.getMinutes() || includeMins
+    date.getMinutes() || alwaysIncludeMin
       ? ':' + String(date.getMinutes()).padStart(2, '0')
       : '';
   const postFix = date.getHours() < 12 ? 'am' : 'pm';
   return `${hour}${minute} ${postFix}`;
 };
 
+const getTimeRangeText = (from: Date, to: Date) => {
+  let startTimeTxt = getTimeText(from);
+  const endTimeTxt = getTimeText(to);
+  const samePostFix = endTimeTxt.includes('pm') === startTimeTxt.includes('pm');
+  startTimeTxt = samePostFix
+    ? startTimeTxt.substring(0, startTimeTxt.length - 3)
+    : startTimeTxt;
+  return `${startTimeTxt} - ${endTimeTxt}`;
+};
+
 export {
+  getTimeRangeText,
   getTimeText,
   createEvent,
   getEventStatus,

@@ -136,12 +136,18 @@ const CalendarPage: React.FC = () => {
     },
     [calendarColors, calendars]
   );
-  const monthName = `${monthData.name} ${currentDate.getFullYear().toString()}`;
-
+  let title = null;
+  if (currentView === Views.DAY) {
+    title = `${monthData.name} ${currentDate.getDate()}, ${currentDate
+      .getFullYear()
+      .toString()}`;
+  } else {
+    title = `${monthData.name} ${currentDate.getFullYear().toString()}`;
+  }
   return (
     <div className="calendar">
       <div className="calendar-header">
-        {monthName}
+        {title}
         <TimeDisplay date={currentDate} />
       </div>
       <div className="calendar-body">

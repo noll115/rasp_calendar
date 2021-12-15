@@ -101,3 +101,8 @@ export interface StoreData {
   googleCredentials?: Credentials;
   syncTokens: Record<string, string>;
 }
+
+export interface DayData {
+  startOfDay: number;
+  endOfDay: number;
+}
