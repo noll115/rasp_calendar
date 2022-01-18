@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { getEventStatus, getTimeRangeText } from 'renderer/util';
 import { DayData, Event, EventDate, EventDateTime } from 'types';
-import { ImClock, ImCheckmark, ImCross } from 'react-icons/im';
+import { ImClock, ImCheckmark, ImCross, ImParagraphLeft } from 'react-icons/im';
 import { IoHelpSharp } from 'react-icons/io5';
 import { BsPeopleFill } from 'react-icons/bs';
 import { IconType } from 'react-icons';
@@ -13,7 +13,7 @@ interface Props {
   getEventColor(event: Event): string;
 }
 
-const EventDesc: React.FC<Props> = ({ time, events, getEventColor }) => {
+const DayDescription: React.FC<Props> = ({ time, events, getEventColor }) => {
   const [allDayEvents, setAllDayEvents] = useState<EventDate[]>([]);
   useEffect(() => {
     const allDayEvents = events.filter(event => event.fullDay) as EventDate[];
@@ -34,7 +34,7 @@ const EventDesc: React.FC<Props> = ({ time, events, getEventColor }) => {
   }
   console.log(currentEvents, futureEvent);
   return (
-    <div className="event-desc">
+    <div className="day-description">
       {allDayEvents.length > 0 && (
         <section className="all-day-events">
           <h1>All Day Events</h1>
@@ -63,7 +63,7 @@ const EventDesc: React.FC<Props> = ({ time, events, getEventColor }) => {
       )}
       {futureEvent && (
         <section className="future-event">
-          <h1>Upcoming events</h1>
+          <h1>Upcoming event</h1>
           <EventDisplay event={futureEvent} getEventColor={getEventColor} />
         </section>
       )}
@@ -74,7 +74,6 @@ const EventDesc: React.FC<Props> = ({ time, events, getEventColor }) => {
 const AttendeeList = (attendees: calendar_v3.Schema$EventAttendee[]) => {
   return attendees
     .sort((a, b) => {
-      console.log(a.responseStatus, b.responseStatus);
       if (a.responseStatus === b.responseStatus) {
         return 0;
       }
@@ -135,7 +134,6 @@ const EventDisplay: React.FC<EventDisplayProps> = ({
           {getTimeRangeText(event.start.dateTime, event.end.dateTime)}
         </section>
       )}
-      <div>{event.description}</div>
       {event.attendees && (
         <section className="event-attendees">
           <h4>
@@ -145,8 +143,17 @@ const EventDisplay: React.FC<EventDisplayProps> = ({
           <div className="attendees-list">{AttendeeList(event.attendees)}</div>
         </section>
       )}
+      {event.description && (
+        <section className="event-desc">
+          <ImParagraphLeft className="icon" />
+          <span
+            className="content"
+            dangerouslySetInnerHTML={{ __html: event.description }}
+          ></span>
+        </section>
+      )}
     </div>
   );
 };
 
-export { EventDesc };
+export { DayDescription };

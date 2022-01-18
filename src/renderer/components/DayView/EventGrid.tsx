@@ -42,17 +42,16 @@ const EventGrid: React.FC<Props> = ({
       }
     }
   });
-
+  const halfHr = 1.8e6;
   const eventDivs: JSX.Element[] = [];
   eventCols.forEach(eventRow => {
     for (let i = 0; i < eventRow.length; i++) {
       const event = eventRow[i];
       const startTime = event.start.dateTime.getTime() - dayData.startOfDay;
       const endTime = event.end.dateTime.getTime() - dayData.startOfDay;
-
       const startPos = (startTime / dayEndTime) * 100;
       const endPos = 100 - (endTime / dayEndTime) * 100;
-
+      const numOfHalfHrs = (endTime - startTime) / halfHr;
       const status = getEventStatus(event, time);
       const backgroundColor = getEventColor(event);
       const gridColumn =
@@ -60,7 +59,7 @@ const EventGrid: React.FC<Props> = ({
       eventDivs.push(
         <div
           key={event.id}
-          className={`event ${status}`}
+          className={`event ${status} ${numOfHalfHrs <= 1 ? 'small' : ''}`}
           style={{
             top: `${startPos}%`,
             bottom: `${endPos}%`,

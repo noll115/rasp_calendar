@@ -1,10 +1,12 @@
 @import '../../constants.scss';
 .day-view {
   display: flex;
-  height: 100%;
+  height: calc(100% - 20px);
+  margin-top: 20px;
   .events-presentation {
     width: 50%;
     display: flex;
+    flex-shrink: 0;
     flex-direction: column;
     .day-name {
       font-size: 2.5rem;
@@ -47,15 +49,21 @@
         .event {
           position: absolute;
           border-radius: 5px;
-          width: 100%;
-          padding: 4px 2px;
+          width: 98%;
+          padding: 4px 3px;
           font-size: 13px;
           overflow: hidden;
           .time {
             background-color: $base-color;
+            display: inline-flex;
+            justify-content: center;
+            align-items: center;
             border-radius: 0.2rem;
             padding: 0px 4px;
             margin-right: 5px;
+            height: 100%;
+            max-height: 18px;
+            overflow: hidden;
           }
           &.passed {
             opacity: 0.5;
@@ -63,6 +71,13 @@
           &.current {
             box-shadow: 3px 3px 12px -4px rgba(0, 0, 0, 1);
             z-index: 1;
+          }
+          &.small {
+            padding: 0 3px;
+            font-size: 0.7rem;
+            .time {
+              height: 80%;
+            }
           }
         }
         .time-line {
@@ -79,6 +94,7 @@
             height: 10px;
             left: -10px;
             background-color: red;
+            border-radius: 50%;
             display: inline-block;
             position: absolute;
           }
@@ -115,7 +131,8 @@
       }
     }
   }
-  .event-desc {
+
+  .day-description {
     margin-left: 10px;
     flex: 1;
     padding: 10px;
@@ -144,6 +161,7 @@
       }
       &-title,
       &-time,
+      &-desc,
       &-attendees {
         display: flex;
         align-items: center;
@@ -156,9 +174,7 @@
           border-radius: 3px;
           margin: 5px 0px;
           margin-right: 10px;
-        }
-        svg.icon {
-          align-self: center;
+          flex-shrink: 0;
         }
       }
       &-attendees {
@@ -173,7 +189,7 @@
         }
       }
       &-title {
-        margin-bottom: 20px;
+        margin-bottom: 15px;
         .title {
           display: inline-block;
         }

@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Calendars, DayData, Event } from 'types';
 import './day-view.scss';
-import { EventDesc } from './EventDesc';
+import { DayDescription } from './DayDescription';
 import { EventGrid } from './EventGrid';
 
 const hrs: string[] = [];
@@ -87,7 +87,7 @@ const DayView: React.FC<Props> = ({ calendars, time, getEventColor }) => {
           />
         </div>
       </div>
-      <EventDesc
+      <DayDescription
         events={events}
         time={time}
         dayData={dayData}

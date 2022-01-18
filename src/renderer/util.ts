@@ -116,7 +116,8 @@ const removeEventFromCalendar = (eventId: string, calendar: Calendar) => {
 };
 
 const getTimeText = (date: Date, alwaysIncludeMin?: boolean) => {
-  const hour = date.getHours() <= 12 ? date.getHours() : date.getHours() - 12;
+  const hour =
+    date.getHours() - 12 <= 0 ? date.getHours() || 12 : date.getHours() - 12;
   const minute =
     date.getMinutes() || alwaysIncludeMin
       ? ':' + String(date.getMinutes()).padStart(2, '0')

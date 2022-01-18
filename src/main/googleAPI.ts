@@ -115,6 +115,9 @@ class GoogleAPI {
     });
   }
 
+  eventFields =
+    'nextSyncToken,nextPageToken,timeZone,items(id,attendees(responseStatus,email),colorId,updated,summary,description,start(dateTime,date,timeZone),end(dateTime,date,timeZone),reminders/*)';
+
   private async getEvents(
     calendar: CalendarJSON,
     beginMonth: Date,
@@ -126,8 +129,7 @@ class GoogleAPI {
         singleEvents: true,
         timeMin: beginMonth.toISOString(),
         timeMax: endMonth.toISOString(),
-        fields:
-          'nextSyncToken,nextPageToken,timeZone,items(id,attendees(responseStatus,email),colorId,updated,summary,start(dateTime,date,timeZone),end(dateTime,date,timeZone),reminders/*)'
+        fields: this.eventFields
       })!
     ).data;
     calendar.events = eventsRes.items! as EventJson[];
@@ -145,8 +147,7 @@ class GoogleAPI {
         calendarId: calendarId,
         singleEvents: true,
         syncToken,
-        fields:
-          'nextSyncToken,nextPageToken,timeZone,items(status,attendees(responseStatus,email),id,colorId,updated,summary,start(dateTime,date,timeZone),end(dateTime,date,timeZone),reminders/*)'
+        fields: this.eventFields
       })!
     ).data;
     return [calendarId, eventsRes.nextSyncToken!, eventsRes.items!];
