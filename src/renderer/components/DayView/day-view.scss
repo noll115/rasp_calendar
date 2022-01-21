@@ -1,0 +1,221 @@
+@import '../../constants.scss';
+.day-view {
+  display: flex;
+  height: calc(100% - 20px);
+  margin-top: 20px;
+  .events-presentation {
+    width: 50%;
+    display: flex;
+    flex-shrink: 0;
+    flex-direction: column;
+    .day-name {
+      font-size: 2.5rem;
+      text-align: center;
+      font-weight: bold;
+    }
+    .events-grid {
+      flex-grow: 1;
+      display: grid;
+      grid-template-rows: repeat(24, 1fr);
+      grid-template-columns: 10% 1fr 1fr;
+      padding: 0 0 10px 0;
+      .hours {
+        grid-column: 1;
+        grid-row: 1/-1;
+        font-size: 12px;
+        display: grid;
+        grid-template-rows: repeat(24, 1fr);
+        grid-template-columns: 1fr;
+        padding-right: 15px;
+        .hour-wrap {
+          text-align: right;
+          display: flex;
+          flex-direction: column;
+          justify-content: flex-end;
+          .hour {
+            position: relative;
+            bottom: -25%;
+          }
+        }
+      }
+      .events {
+        grid-row: 1/-1;
+        grid-column: 2/4;
+        position: relative;
+        display: grid;
+        grid-template-rows: 1fr;
+        grid-template-columns: 1fr 1fr;
+        column-gap: 5px;
+        .event {
+          position: absolute;
+          border-radius: 5px;
+          width: 98%;
+          padding: 4px 3px;
+          font-size: 13px;
+          overflow: hidden;
+          .time {
+            background-color: $base-color;
+            display: inline-flex;
+            justify-content: center;
+            align-items: center;
+            border-radius: 0.2rem;
+            padding: 0px 4px;
+            margin-right: 5px;
+            height: 100%;
+            max-height: 18px;
+            overflow: hidden;
+          }
+          &.passed {
+            opacity: 0.5;
+          }
+          &.current {
+            box-shadow: 3px 3px 12px -4px rgba(0, 0, 0, 1);
+            z-index: 1;
+          }
+          &.small {
+            padding: 0 3px;
+            font-size: 0.7rem;
+            .time {
+              height: 80%;
+            }
+          }
+        }
+        .time-line {
+          position: absolute;
+          width: 100%;
+          background-color: red;
+          height: 2px;
+          display: flex;
+          align-items: center;
+          z-index: 1;
+          &::after {
+            content: '';
+            width: 10px;
+            height: 10px;
+            left: -10px;
+            background-color: red;
+            border-radius: 50%;
+            display: inline-block;
+            position: absolute;
+          }
+        }
+      }
+
+      .vertical,
+      .horizontal {
+        position: relative;
+        opacity: 0.5;
+      }
+      .horizontal {
+        background-color: grey;
+        height: 1px;
+        align-self: flex-end;
+        bottom: -1px;
+        grid-column: 2/-1;
+        width: 102%;
+        left: -2%;
+      }
+      .vertical {
+        grid-row: 1/-1;
+        grid-column: 2/-1;
+        display: flex;
+        justify-content: center;
+        div {
+          width: 1px;
+          height: 100%;
+          background-color: grey;
+          bottom: -1%;
+          position: absolute;
+          left: 0;
+        }
+      }
+    }
+  }
+
+  .day-description {
+    margin-left: 10px;
+    flex: 1;
+    padding: 10px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    .current-events,
+    .future-event,
+    .all-day-events {
+      width: 100%;
+      box-shadow: 3px 3px 12px -4px rgba(0, 0, 0, 1);
+      border-radius: 10px;
+      padding: 10px 15px;
+      margin-bottom: 25px;
+      h1 {
+        margin-bottom: 10px;
+      }
+    }
+    .event {
+      flex: 1;
+      border-radius: 10px;
+      padding: 10px 15px;
+      box-shadow: 1px 1px 10px -4px rgba(0, 0, 0, 1);
+      section:not(:first-child) {
+        margin-top: 5px;
+      }
+      &-title,
+      &-time,
+      &-desc,
+      &-attendees {
+        display: flex;
+        align-items: center;
+        h4 {
+          display: flex;
+        }
+        .icon {
+          width: 25px;
+          align-self: stretch;
+          border-radius: 3px;
+          margin: 5px 0px;
+          margin-right: 10px;
+          flex-shrink: 0;
+        }
+      }
+      &-attendees {
+        flex-direction: column;
+        align-items: flex-start;
+        .attendees-list {
+          margin-left: 35px;
+          > div {
+            display: flex;
+            align-items: center;
+          }
+        }
+      }
+      &-title {
+        margin-bottom: 15px;
+        .title {
+          display: inline-block;
+        }
+      }
+    }
+    .all-day-events {
+    }
+    .current-events {
+      > div {
+        display: flex;
+        > div {
+          &:not(:first-child) {
+            margin-left: 10px;
+          }
+        }
+      }
+      .event {
+      }
+    }
+    .future-event {
+      .event {
+      }
+    }
+
+    &.no-events {
+      font-size: 2rem;
+    }
+  }
+}

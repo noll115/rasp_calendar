@@ -1,8 +1,10 @@
 @import url('https://fonts.googleapis.com/css2?family=Open+Sans:ital,wght@0,400;0,500;0,700;1,400&display=swap');
-$base-color: #2c9ecc;
-$black-color:#212121;
+@import './constants.scss';
 * {
   font-family: 'Open Sans', sans-serif;
+  box-sizing: border-box;
+  padding: 0;
+  margin: 0;
 }
 
 body,

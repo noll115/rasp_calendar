@@ -16,6 +16,7 @@ import { autoUpdater } from 'electron-updater';
 import log from 'electron-log';
 import { resolveHtmlPath } from './util';
 import googleAPI from './googleAPI';
+import { UserStore } from './userStore';
 
 export default class AppUpdater {
   constructor() {
@@ -38,6 +39,13 @@ const isDevelopment =
 if (isDevelopment) {
   require('electron-debug')();
 }
+const RESOURCES_PATH = app.isPackaged
+? path.join(process.resourcesPath, 'assets')
+: path.join(__dirname, '../../assets');
+
+const getAssetPath = (...paths: string[]): string => {
+return path.join(RESOURCES_PATH, ...paths);
+};
 
 const installExtensions = async () => {
   const installer = require('electron-devtools-installer');
@@ -57,23 +65,16 @@ const createWindow = async () => {
     await installExtensions();
   }
 
-  const RESOURCES_PATH = app.isPackaged
-    ? path.join(process.resourcesPath, 'assets')
-    : path.join(__dirname, '../../assets');
-
-  const getAssetPath = (...paths: string[]): string => {
-    return path.join(RESOURCES_PATH, ...paths);
-  };
-
   mainWindow = new BrowserWindow({
     show: false,
     width: 1920,
     height: 1080,
     icon: getAssetPath('icon.png'),
     webPreferences: {
-      preload: path.join(__dirname, 'preload.js'),
+      preload: path.join(__dirname, 'preload.js')
     },
   });
+  const store = new UserStore('userData');
 
   mainWindow.loadURL(resolveHtmlPath('index.html'));
 
@@ -86,7 +87,7 @@ const createWindow = async () => {
     } else {
       mainWindow.show();
     }
-    new googleAPI(mainWindow);
+    new googleAPI(mainWindow,store,getAssetPath);
   });
 
   mainWindow.on('closed', () => {
