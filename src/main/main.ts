@@ -40,11 +40,11 @@ if (isDevelopment) {
   require('electron-debug')();
 }
 const RESOURCES_PATH = app.isPackaged
-? path.join(process.resourcesPath, 'assets')
-: path.join(__dirname, '../../assets');
+  ? path.join(process.resourcesPath, 'assets')
+  : path.join(__dirname, '../../assets');
 
 const getAssetPath = (...paths: string[]): string => {
-return path.join(RESOURCES_PATH, ...paths);
+  return path.join(RESOURCES_PATH, ...paths);
 };
 
 const installExtensions = async () => {
@@ -54,7 +54,7 @@ const installExtensions = async () => {
 
   return installer
     .default(
-      extensions.map((name) => installer[name]),
+      extensions.map(name => installer[name]),
       forceDownload
     )
     .catch(console.log);
@@ -72,7 +72,7 @@ const createWindow = async () => {
     icon: getAssetPath('icon.png'),
     webPreferences: {
       preload: path.join(__dirname, 'preload.js')
-    },
+    }
   });
   const store = new UserStore('userData');
 
@@ -87,13 +87,20 @@ const createWindow = async () => {
     } else {
       mainWindow.show();
     }
-    new googleAPI(mainWindow,store,getAssetPath);
+    new googleAPI(mainWindow, store, getAssetPath);
   });
 
   mainWindow.on('closed', () => {
     mainWindow = null;
   });
 
+  mainWindow.webContents.on(
+    'select-bluetooth-device',
+    (event, deviceList, cb) => {
+      event.preventDefault();
+      cb(deviceList[0].deviceId);
+    }
+  );
   // Remove this if your app does not use auto updates
   // eslint-disable-next-line
   new AppUpdater();

@@ -1,23 +1,29 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import cat from '../../../assets/img/cat.gif';
 import { useHistory } from 'react-router';
 import './init-page.scss';
+import QRcode from 'qrcode';
 
 const Login: React.FC<{ url: string }> = ({ url }) => {
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  useEffect(() => {
+    if (canvasRef.current) {
+      QRcode.toCanvas(canvasRef.current, url, {
+        width: canvasRef.current.width
+      });
+    }
+  }, []);
+
   return (
     <div className="login-page">
       <div className="title">
         <i className="fab fa-raspberry-pi" /> - Calendar
       </div>
       <div className="body">
-        Please go to
-        <br />
-        {`http://${url}`}
-        <br />
-        to link your google calendar.
+        <canvas ref={canvasRef} className="canvas" />
         <div className="icons">
+          Please scan with the app to get started
           <i className="fas fa-mobile-alt" />
-          <i className="fas fa-desktop" />
         </div>
       </div>
     </div>
@@ -36,7 +42,7 @@ const InitPage: React.FC = () => {
   const [loginState, setLoginState] = useState({
     loading: true,
     isLoggedIn: false,
-    url: '',
+    url: ''
   });
 
   const history = useHistory();
@@ -46,7 +52,7 @@ const InitPage: React.FC = () => {
       setLoginState({
         loading: false,
         isLoggedIn: newState.loggedIn,
-        url: newState.loggedIn ? '' : newState.url,
+        url: newState.loggedIn ? '' : newState.url
       });
     });
   }, []);

@@ -11,6 +11,11 @@
 		1F6D4208273DF05600724CCA /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1F6D4207273DF05600724CCA /* ContentView.swift */; };
 		1F6D420A273DF05700724CCA /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 1F6D4209273DF05700724CCA /* Assets.xcassets */; };
 		1F6D420D273DF05700724CCA /* Preview Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 1F6D420C273DF05700724CCA /* Preview Assets.xcassets */; };
+		1FFE545E279FD9A700FE0823 /* RaspPi.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1FFE545D279FD9A700FE0823 /* RaspPi.swift */; };
+		1FFE546027A139F800FE0823 /* SafariViewWrapper.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1FFE545F27A139F800FE0823 /* SafariViewWrapper.swift */; };
+		1FFE546327A286B100FE0823 /* CodeScanner in Frameworks */ = {isa = PBXBuildFile; productRef = 1FFE546227A286B100FE0823 /* CodeScanner */; };
+		1FFE546527AA1F1500FE0823 /* QRCodeScannerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1FFE546427AA1F1500FE0823 /* QRCodeScannerView.swift */; };
+		1FFE546727AA2E4F00FE0823 /* RaspPiControllerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1FFE546627AA2E4F00FE0823 /* RaspPiControllerView.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -20,6 +25,10 @@
 		1F6D4209273DF05700724CCA /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		1F6D420C273DF05700724CCA /* Preview Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = "Preview Assets.xcassets"; sourceTree = "<group>"; };
 		1F6D4213273DF9D100724CCA /* Rasp-Calendar-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = "Rasp-Calendar-Info.plist"; sourceTree = SOURCE_ROOT; };
+		1FFE545D279FD9A700FE0823 /* RaspPi.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RaspPi.swift; sourceTree = "<group>"; };
+		1FFE545F27A139F800FE0823 /* SafariViewWrapper.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SafariViewWrapper.swift; sourceTree = "<group>"; };
+		1FFE546427AA1F1500FE0823 /* QRCodeScannerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QRCodeScannerView.swift; sourceTree = "<group>"; };
+		1FFE546627AA2E4F00FE0823 /* RaspPiControllerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RaspPiControllerView.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -27,6 +36,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				1FFE546327A286B100FE0823 /* CodeScanner in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -52,11 +62,15 @@
 		1F6D4204273DF05600724CCA /* Rasp Calendar */ = {
 			isa = PBXGroup;
 			children = (
+				1FFE545C279FD98E00FE0823 /* Models */,
 				1F6D4213273DF9D100724CCA /* Rasp-Calendar-Info.plist */,
 				1F6D4205273DF05600724CCA /* Rasp_CalendarApp.swift */,
 				1F6D4207273DF05600724CCA /* ContentView.swift */,
 				1F6D4209273DF05700724CCA /* Assets.xcassets */,
 				1F6D420B273DF05700724CCA /* Preview Content */,
+				1FFE545F27A139F800FE0823 /* SafariViewWrapper.swift */,
+				1FFE546427AA1F1500FE0823 /* QRCodeScannerView.swift */,
+				1FFE546627AA2E4F00FE0823 /* RaspPiControllerView.swift */,
 			);
 			path = "Rasp Calendar";
 			sourceTree = "<group>";
@@ -67,6 +81,14 @@
 				1F6D420C273DF05700724CCA /* Preview Assets.xcassets */,
 			);
 			path = "Preview Content";
+			sourceTree = "<group>";
+		};
+		1FFE545C279FD98E00FE0823 /* Models */ = {
+			isa = PBXGroup;
+			children = (
+				1FFE545D279FD9A700FE0823 /* RaspPi.swift */,
+			);
+			path = Models;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -85,6 +107,9 @@
 			dependencies = (
 			);
 			name = "Rasp Calendar";
+			packageProductDependencies = (
+				1FFE546227A286B100FE0823 /* CodeScanner */,
+			);
 			productName = "Rasp Calendar";
 			productReference = 1F6D4202273DF05600724CCA /* Rasp Calendar.app */;
 			productType = "com.apple.product-type.application";
@@ -113,6 +138,9 @@
 				Base,
 			);
 			mainGroup = 1F6D41F9273DF05600724CCA;
+			packageReferences = (
+				1FFE546127A286B100FE0823 /* XCRemoteSwiftPackageReference "CodeScanner" */,
+			);
 			productRefGroup = 1F6D4203273DF05600724CCA /* Products */;
 			projectDirPath = "";
 			projectRoot = "";
@@ -139,8 +167,12 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				1FFE546027A139F800FE0823 /* SafariViewWrapper.swift in Sources */,
 				1F6D4208273DF05600724CCA /* ContentView.swift in Sources */,
 				1F6D4206273DF05600724CCA /* Rasp_CalendarApp.swift in Sources */,
+				1FFE545E279FD9A700FE0823 /* RaspPi.swift in Sources */,
+				1FFE546527AA1F1500FE0823 /* QRCodeScannerView.swift in Sources */,
+				1FFE546727AA2E4F00FE0823 /* RaspPiControllerView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -275,12 +307,13 @@
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = "Rasp-Calendar-Info.plist";
+				INFOPLIST_KEY_NSCameraUsageDescription = "";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations = UIInterfaceOrientationPortrait;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
-				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = UIInterfaceOrientationPortrait;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -306,12 +339,13 @@
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = "Rasp-Calendar-Info.plist";
+				INFOPLIST_KEY_NSCameraUsageDescription = "";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations = UIInterfaceOrientationPortrait;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
-				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = UIInterfaceOrientationPortrait;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -347,6 +381,25 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		1FFE546127A286B100FE0823 /* XCRemoteSwiftPackageReference "CodeScanner" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/twostraws/CodeScanner";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 2.0.0;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		1FFE546227A286B100FE0823 /* CodeScanner */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 1FFE546127A286B100FE0823 /* XCRemoteSwiftPackageReference "CodeScanner" */;
+			productName = CodeScanner;
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = 1F6D41FA273DF05600724CCA /* Project object */;
 }

@@ -9,9 +9,19 @@ import SwiftUI
 
 @main
 struct Rasp_CalendarApp: App {
+    @StateObject var raspPiInfo = RaspPi()
+    
     var body: some Scene {
         WindowGroup {
-            ContentView()
+            ZStack{
+                if raspPiInfo.IPAddr == nil {
+                    ContentView()
+                } else {
+                    RaspPiControllerView()
+                }
+            }
+            .environmentObject(raspPiInfo)
+            
         }
     }
 }
