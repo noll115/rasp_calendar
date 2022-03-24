@@ -9,15 +9,28 @@ import SwiftUI
 
 struct RaspPiControllerView: View {
     
-    @EnvironmentObject var raspPiObj: RaspPi
-    @State var hasConnected = false
-    
+    @EnvironmentObject var raspPi: RaspPi
+    @State var synced = false
     var body: some View {
-        ProgressView()
-            .onAppear{
-                
-            }
+        
+        if(synced){
             
+        } else {
+            ProgressView()
+                .task {
+                    await syncWithCalendar()
+                }
+        }
+    }
+    @MainActor
+    func syncWithCalendar() async {
+        do{
+            try await raspPi.syncCalendar()
+            self.synced = true
+        } catch {
+            print(error)
+        }
+        
     }
 }
 

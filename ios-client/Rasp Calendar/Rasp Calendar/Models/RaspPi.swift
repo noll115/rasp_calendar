@@ -7,27 +7,41 @@
 
 import Foundation
 
-enum CalendarViewModes: String {
+enum CalendarViewModes: String , CaseIterable{
     case day
     case month
 }
 
 enum CalendarViewErrors:Error{
-    case badURL
-    case connectionError
+    case serverError
 }
 
 class RaspPi: ObservableObject {
     
-    @Published var IPAddr:String? = nil
-    @Published var email:String? = nil
+    @Published private var IPAddr:String? = nil
+    @Published private(set) var email:String? = nil
+    @Published private(set) var currentViewMode: CalendarViewModes? = nil
+    
+    var hasIP: Bool {
+        get {
+            return IPAddr != nil
+        }
+    }
+    
+    
+    
+    func setIPAddr(_ newIPAddr: String) {
+        guard URL(string: newIPAddr) != nil else {
+            self.IPAddr = nil
+            return
+        }
+        self.IPAddr = newIPAddr
+    }
     
     func changeCalendarView(_ mode: CalendarViewModes) async throws {
-        guard let IPAddr = IPAddr else {
-            throw CalendarViewErrors.badURL
-        }
-        guard var urlComponents = URLComponents(string: IPAddr) else {
-            throw CalendarViewErrors.badURL
+        guard let IPAddr = IPAddr, var urlComponents = URLComponents(string: IPAddr) else {
+            IPAddr = nil
+            return
         }
         
         urlComponents.queryItems = [
@@ -35,11 +49,27 @@ class RaspPi: ObservableObject {
         ]
         
         guard let url = urlComponents.url else {
-            throw CalendarViewErrors.badURL
+            self.IPAddr = nil
+            return
         }
         
-        do{
-            let (data,_) = try await URLSession.shared.data(from:url )
+        
+        let (data,res) = try await URLSession.shared.data(from:url)
+        guard let res = res as? HTTPURLResponse, (200...299).contains(res.statusCode) else {
+            throw CalendarViewErrors.serverError
+        }
+        
+    }
+    
+    func syncCalendar() async throws {
+        guard let IPAddr = IPAddr, let url = URL(string: IPAddr) else {
+            self.IPAddr = nil
+            return
+        }
+        
+        let (data,res) = try await URLSession.shared.data(from: url)
+        guard let res = res as? HTTPURLResponse, (200...299).contains(res.statusCode) else{
+            throw CalendarViewErrors.serverError
         }
     }
     

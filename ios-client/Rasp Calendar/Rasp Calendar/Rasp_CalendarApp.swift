@@ -14,11 +14,11 @@ struct Rasp_CalendarApp: App {
     var body: some Scene {
         WindowGroup {
             ZStack{
-                if raspPiInfo.IPAddr == nil {
-                    ContentView()
-                } else {
+//                if !raspPiInfo.hasIP {
+//                    ContentView()
+//                } else {
                     RaspPiControllerView()
-                }
+//                }
             }
             .environmentObject(raspPiInfo)
             

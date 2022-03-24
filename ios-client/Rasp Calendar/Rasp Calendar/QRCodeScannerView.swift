@@ -14,20 +14,17 @@ struct QRCodeScannerView: View {
     
     var body: some View {
         ZStack(alignment: .bottom) {
-            CodeScannerView(codeTypes: [.qr]){ response in
-                switch response {
-                case .success(let result):
-                    let urlString = "http://\(result.string)"
-                    guard let _ = URL(string: urlString) else {
-                        return
-                    }
-                    raspPi.IPAddr = urlString
-                    print(result.string)
-                case .failure(let error):
-                    print(error.localizedDescription)
-                }
-                
-            }.ignoresSafeArea()
+//            CodeScannerView(codeTypes: [.qr]){ response in
+//                switch response {
+//                case .success(let result):
+//                    let urlString = "http://\(result.string)"
+//                    raspPi.setIPAddr(urlString)
+//                    print(result.string)
+//                case .failure(let error):
+//                    print(error.localizedDescription)
+//                }
+//                
+//            }.ignoresSafeArea()
             
             VStack {
                 Spacer()

@@ -7,10 +7,13 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		1F42366D27EA75250010549B /* CalendarPeripheral.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1F42366C27EA75250010549B /* CalendarPeripheral.swift */; };
 		1F6D4206273DF05600724CCA /* Rasp_CalendarApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1F6D4205273DF05600724CCA /* Rasp_CalendarApp.swift */; };
 		1F6D4208273DF05600724CCA /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1F6D4207273DF05600724CCA /* ContentView.swift */; };
 		1F6D420A273DF05700724CCA /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 1F6D4209273DF05700724CCA /* Assets.xcassets */; };
 		1F6D420D273DF05700724CCA /* Preview Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 1F6D420C273DF05700724CCA /* Preview Assets.xcassets */; };
+		1FC5186727B1E5A9003F9625 /* CalendarView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1FC5186627B1E5A9003F9625 /* CalendarView.swift */; };
+		1FC5186927B4F108003F9625 /* BluetoothManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1FC5186827B4F108003F9625 /* BluetoothManager.swift */; };
 		1FFE545E279FD9A700FE0823 /* RaspPi.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1FFE545D279FD9A700FE0823 /* RaspPi.swift */; };
 		1FFE546027A139F800FE0823 /* SafariViewWrapper.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1FFE545F27A139F800FE0823 /* SafariViewWrapper.swift */; };
 		1FFE546327A286B100FE0823 /* CodeScanner in Frameworks */ = {isa = PBXBuildFile; productRef = 1FFE546227A286B100FE0823 /* CodeScanner */; };
@@ -19,12 +22,15 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		1F42366C27EA75250010549B /* CalendarPeripheral.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CalendarPeripheral.swift; sourceTree = "<group>"; };
 		1F6D4202273DF05600724CCA /* Rasp Calendar.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "Rasp Calendar.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 		1F6D4205273DF05600724CCA /* Rasp_CalendarApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Rasp_CalendarApp.swift; sourceTree = "<group>"; };
 		1F6D4207273DF05600724CCA /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
 		1F6D4209273DF05700724CCA /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		1F6D420C273DF05700724CCA /* Preview Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = "Preview Assets.xcassets"; sourceTree = "<group>"; };
 		1F6D4213273DF9D100724CCA /* Rasp-Calendar-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = "Rasp-Calendar-Info.plist"; sourceTree = SOURCE_ROOT; };
+		1FC5186627B1E5A9003F9625 /* CalendarView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CalendarView.swift; sourceTree = "<group>"; };
+		1FC5186827B4F108003F9625 /* BluetoothManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BluetoothManager.swift; sourceTree = "<group>"; };
 		1FFE545D279FD9A700FE0823 /* RaspPi.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RaspPi.swift; sourceTree = "<group>"; };
 		1FFE545F27A139F800FE0823 /* SafariViewWrapper.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SafariViewWrapper.swift; sourceTree = "<group>"; };
 		1FFE546427AA1F1500FE0823 /* QRCodeScannerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QRCodeScannerView.swift; sourceTree = "<group>"; };
@@ -71,6 +77,8 @@
 				1FFE545F27A139F800FE0823 /* SafariViewWrapper.swift */,
 				1FFE546427AA1F1500FE0823 /* QRCodeScannerView.swift */,
 				1FFE546627AA2E4F00FE0823 /* RaspPiControllerView.swift */,
+				1FC5186627B1E5A9003F9625 /* CalendarView.swift */,
+				1FC5186827B4F108003F9625 /* BluetoothManager.swift */,
 			);
 			path = "Rasp Calendar";
 			sourceTree = "<group>";
@@ -87,6 +95,7 @@
 			isa = PBXGroup;
 			children = (
 				1FFE545D279FD9A700FE0823 /* RaspPi.swift */,
+				1F42366C27EA75250010549B /* CalendarPeripheral.swift */,
 			);
 			path = Models;
 			sourceTree = "<group>";
@@ -167,7 +176,10 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				1F42366D27EA75250010549B /* CalendarPeripheral.swift in Sources */,
 				1FFE546027A139F800FE0823 /* SafariViewWrapper.swift in Sources */,
+				1FC5186727B1E5A9003F9625 /* CalendarView.swift in Sources */,
+				1FC5186927B4F108003F9625 /* BluetoothManager.swift in Sources */,
 				1F6D4208273DF05600724CCA /* ContentView.swift in Sources */,
 				1F6D4206273DF05600724CCA /* Rasp_CalendarApp.swift in Sources */,
 				1FFE545E279FD9A700FE0823 /* RaspPi.swift in Sources */,

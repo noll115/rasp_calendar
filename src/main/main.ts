@@ -17,7 +17,7 @@ import log from 'electron-log';
 import { resolveHtmlPath } from './util';
 import googleAPI from './googleAPI';
 import { UserStore } from './userStore';
-
+import './bluetoothAdapter';
 export default class AppUpdater {
   constructor() {
     log.transports.file.level = 'info';
@@ -64,7 +64,6 @@ const createWindow = async () => {
   if (isDevelopment) {
     await installExtensions();
   }
-
   mainWindow = new BrowserWindow({
     show: false,
     width: 1920,
@@ -93,14 +92,6 @@ const createWindow = async () => {
   mainWindow.on('closed', () => {
     mainWindow = null;
   });
-
-  mainWindow.webContents.on(
-    'select-bluetooth-device',
-    (event, deviceList, cb) => {
-      event.preventDefault();
-      cb(deviceList[0].deviceId);
-    }
-  );
   // Remove this if your app does not use auto updates
   // eslint-disable-next-line
   new AppUpdater();
