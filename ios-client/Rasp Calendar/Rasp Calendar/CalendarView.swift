@@ -23,11 +23,8 @@ struct CalendarView: View {
     @MainActor
     func updateCalendar() async {
         let nextMode: CalendarViewModes = currentViewMode == .day ? .month : .day
-        do {
-            try await raspPi.changeCalendarView(nextMode)
-        } catch {
-          print(error)
-        }
+        await raspPi.changeCalendarView(nextMode)
+        
     }
 }
 

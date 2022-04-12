@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import cat from '../../../assets/img/cat.gif';
+// import cat from '../../../assets/img/cat.gif';
 import { useHistory } from 'react-router';
 import './init-page.scss';
 import QRcode from 'qrcode';
@@ -30,42 +30,46 @@ const Login: React.FC<{ url: string }> = ({ url }) => {
   );
 };
 
-const Loading: React.FC = () => {
-  return (
-    <div className="loading">
-      <img src={cat} alt="cat" />
-    </div>
-  );
-};
+// const Loading: React.FC = () => {
+//   return (
+//     <div className="loading">
+//       <img src={cat} alt="cat" />
+//     </div>
+//   );
+// };
 
 const InitPage: React.FC = () => {
   const [loginState, setLoginState] = useState({
-    loading: true,
     isLoggedIn: false,
     url: ''
   });
 
   const history = useHistory();
-  console.log(loginState);
+
   useEffect(() => {
-    window.api.onLogin((_, newState) => {
+    const getInitiState = async () => {
+      let state = await window.api.getInitialState();
       setLoginState({
-        loading: false,
+        isLoggedIn: state.isLoggedIn,
+        url: state.isLoggedIn ? '' : state.url!
+      });
+    };
+    getInitiState();
+
+    let remove = window.api.onLoginChange((_, newState) => {
+      setLoginState({
         isLoggedIn: newState.loggedIn,
         url: newState.loggedIn ? '' : newState.url
       });
     });
+    return remove;
   }, []);
 
-  useEffect(() => {
-    if (loginState.isLoggedIn) {
-      history.push('/calendar');
-    }
-  }, [loginState.isLoggedIn, history]);
+  if (loginState.isLoggedIn) {
+    history.push('/calendar');
+  }
 
-  if (loginState.loading) return <Loading />;
-
-  if (!loginState.loading && !loginState.isLoggedIn) {
+  if (!loginState.isLoggedIn && loginState.url) {
     return <Login url={loginState.url} />;
   }
 

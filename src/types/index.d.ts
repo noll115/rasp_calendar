@@ -7,8 +7,14 @@ declare global {
   }
 }
 
+type IpcEventCallback<T> = (event: IpcRendererEvent, arg: T) => void;
+type IpcRendererEventFunction<T> = (cb: IpcEventCallback<T>) => () => void;
+
 export interface API {
-  onLogin(cb: (event: IpcRendererEvent, arg: IloggedIn) => void): void;
+  onLoginChange: IpcRendererEventFunction<IloggedIn>;
+  onCalendarAction: IpcRendererEventFunction<CalendarAction>;
+  onConnectionChange: IpcRendererEventFunction<Object>;
+  getInitialState(): InitialCalendarState;
   getData(): Promise<CalendarJSON[]>;
   getCalendarColors(): Promise<CalendarColors>;
   getEventRefresh(): Promise<Record<string, EventJson[]>>;
@@ -23,7 +29,14 @@ export type IloggedIn =
       url: string;
     };
 
+export interface InitialCalendarState {
+  isLoggedIn: boolean;
+  url?: string;
+  viewMode: ViewModes;
+}
+
 export type EventStatus = 'future' | 'current' | 'passed' | 'cancelled';
+export type ViewModes = 'day' | 'month';
 
 interface EventBase extends Omit<calendar_v3.Schema$Event, 'start' | 'end'> {
   dateIndexes: number[];
@@ -100,9 +113,27 @@ export interface CalendarColors {
 export interface StoreData {
   googleCredentials?: Credentials;
   syncTokens: Record<string, string>;
+  calendarViewMode: ViewModes;
 }
 
 export interface DayData {
   startOfDay: number;
   endOfDay: number;
 }
+
+export type CalendarActions = 'changeView' | 'refresh';
+
+interface CalendarActionBase<T extends CalendarActions> {
+  type: T;
+  body?: Object;
+}
+
+interface ChangeViewAction extends CalendarActionBase<'changeView'> {
+  body: {
+    viewMode: ViewModes;
+  };
+}
+
+interface RefreshCalendarAction extends CalendarActionBase<'refresh'> {}
+
+export type CalendarAction = ChangeViewAction | RefreshCalendarAction;

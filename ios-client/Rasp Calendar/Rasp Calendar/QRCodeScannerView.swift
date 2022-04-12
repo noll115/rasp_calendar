@@ -9,22 +9,46 @@ import SwiftUI
 import CodeScanner
 
 struct QRCodeScannerView: View {
+    
     @Binding var showCamera: Bool
     @EnvironmentObject var raspPi: RaspPi
     
+#if targetEnvironment(simulator)
+    @State var textStr = ""
+#endif
+    
     var body: some View {
         ZStack(alignment: .bottom) {
-//            CodeScannerView(codeTypes: [.qr]){ response in
-//                switch response {
-//                case .success(let result):
-//                    let urlString = "http://\(result.string)"
-//                    raspPi.setIPAddr(urlString)
-//                    print(result.string)
-//                case .failure(let error):
-//                    print(error.localizedDescription)
-//                }
-//                
-//            }.ignoresSafeArea()
+#if targetEnvironment(simulator)
+            Group{
+                TextField("Calendar IP Address",text:$textStr)
+                    .padding()
+                    .onSubmit {
+                        Task{
+                            if await raspPi.connectToRaspPi(textStr) {
+                                showCamera = false
+                            }
+                        }
+                    }
+                
+            }.frame( maxHeight: .infinity)
+#else
+            CodeScannerView(codeTypes: [.qr]){ response in
+                switch response {
+                case .success(let result):
+                    Task{
+                        if await raspPi.connectToRaspPi(result.string) {
+                            showCamera = false
+                        }
+                    }
+                    print(result.string)
+                case .failure(let error):
+                    print(error.localizedDescription)
+                }
+                
+            }.ignoresSafeArea()
+#endif
+            
             
             VStack {
                 Spacer()
@@ -40,7 +64,6 @@ struct QRCodeScannerView: View {
             
         }
     }
-    
     
 }
 

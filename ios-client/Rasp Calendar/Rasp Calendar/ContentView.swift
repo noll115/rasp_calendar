@@ -6,65 +6,42 @@
 //
 
 import SwiftUI
-import AVFoundation
+import GoogleSignIn
 
 struct ContentView: View {
-    @State var showCamera = false
-    @Environment(\.colorScheme) var colorScheme
     
-    let raspPi = Image("rasp_pi")
-    
-    
-    private func raspIcon() -> some View {
-        let img = raspPi
-            .resizable()
-            .scaledToFit()
-        return colorScheme == .dark ? AnyView(img.colorInvert()) : AnyView(img)
-    }
+    @EnvironmentObject var raspPi: RaspPi
+    var namespace : Namespace.ID
     
     var body: some View {
         VStack{
             Spacer()
-            HStack(alignment: .center){
-                raspIcon()
-                Text("- Calendar")
-                    .padding(.trailing)
-            }
-            .frame( height: 70)
-            .font(.system(size: 60))
-            
+            TitleView()
+                .matchedGeometryEffect(id: "title", in: namespace,isSource: true)
+            Spacer()
             Spacer()
             Button{
-                Task{
-                    await reqCamera($showCamera)
-                }
-                showCamera.toggle()
+                raspPi.signIn(getRootViewController())
             }label: {
-                Text("Scan qr code")
+                Text("Login")
                     .padding()
             }
             .buttonStyle(.borderedProminent)
             Spacer()
         }
-        .sheet(isPresented: $showCamera,onDismiss:{showCamera = false} ){
-            QRCodeScannerView(showCamera: $showCamera)
-        }
-        .navigationBarBackButtonHidden(true)
+        
         
     }
     
-    @MainActor
-    func reqCamera(_ hasAccess : Binding<Bool>) async {
-        let access = await AVCaptureDevice.requestAccess(for: .video)
-        hasAccess.wrappedValue = access
-    }
     
 }
 
 
+
 struct ContentView_Previews: PreviewProvider {
+    @Namespace static var namespace
     static var previews: some View {
-        ContentView()
+        ContentView(namespace: namespace)
         
     }
 }

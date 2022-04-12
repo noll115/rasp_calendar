@@ -2,24 +2,20 @@ import fs from 'fs/promises';
 import { calendar_v3, google } from 'googleapis';
 import http from 'http';
 import log from 'electron-log';
-import { URL } from 'url';
+// import { URL } from 'url';
 import { BrowserWindow, ipcMain } from 'electron';
-import { OAuth2Client } from 'google-auth-library';
-import { CalendarJSON, EventJson } from 'types';
+import { Credentials, OAuth2Client } from 'google-auth-library';
+import { CalendarJSON, EventJson, ViewModes } from '../types';
 import { UserStore } from './userStore';
 
-const SCOPES = ['https://www.googleapis.com/auth/calendar.readonly'];
-
-const PORT = 4040;
-
 class GoogleAPI {
-  mainWindow: BrowserWindow;
-  oAuth2Client: OAuth2Client | undefined;
-  calendarAPI: calendar_v3.Calendar | undefined;
-  store: UserStore;
-  tokenServer: http.Server | null = null;
-  getAssetPath: (path: string) => string;
-
+  private mainWindow: BrowserWindow;
+  private oAuth2Client!: OAuth2Client;
+  private calendarAPI?: calendar_v3.Calendar;
+  private store: UserStore;
+  private getAssetPath: (path: string) => string;
+  private _isLoggedIn = false;
+  private isIpcSetup = false;
   constructor(
     mainWindow: BrowserWindow,
     store: UserStore,
@@ -28,89 +24,87 @@ class GoogleAPI {
     this.mainWindow = mainWindow;
     this.getAssetPath = getAssetPath;
     this.store = store;
-    this.createClient();
   }
 
-  private async startServer(authUrl: string) {
-    let closingServer: Promise<void> | null = null;
-    if (this.tokenServer) {
-      closingServer = new Promise(res => this.tokenServer!.close(() => res()));
-    }
-    return (closingServer ?? Promise.resolve()).then(
-      () =>
-        new Promise<string>(resolve => {
-          this.tokenServer = http.createServer((req, res) => {
-            if (req.url) {
-              log.log(req.url);
-              const urlObj = new URL(req.url, `http://${req.headers.host}`);
-              const code = urlObj.searchParams.get('code');
-              if (code) {
-                resolve(code);
-                res.end('Done');
-                this.tokenServer!.close(() => {
-                  this.tokenServer = null;
-                });
-              } else {
-                res.writeHead(302, {
-                  location: authUrl
-                });
-                res.end();
-              }
-            }
-          });
-          this.tokenServer.listen(PORT, () => {
-            log.log(`listening to ${PORT}`);
-          });
-        })
-    );
+  get isLoggedIn() {
+    return this._isLoggedIn;
   }
 
-  async getNewToken(oAuth2Client: OAuth2Client) {
-    const authUrl = oAuth2Client.generateAuthUrl({
-      access_type: 'offline',
-      scope: SCOPES
+  private parseData(req: http.IncomingMessage) {
+    return new Promise<any>(res => {
+      const chunks: Uint8Array[] = [];
+      req.on('data', chunk => chunks.push(chunk));
+      req.on('end', () => {
+        let jsonData: any = JSON.parse(Buffer.concat(chunks).toString());
+        res(jsonData);
+      });
     });
-    const ip = require('ip');
-    this.mainWindow.webContents.send('onLogin', {
-      loggedIn: false,
-      url: `${ip.address()}:${PORT}`
-    });
-    const code = await this.startServer(authUrl);
-    const r = await oAuth2Client.getToken(code);
-    this.store.set('googleCredentials', r.tokens);
-    return r.tokens;
   }
 
-  async createClient() {
+  async handleUserLogin(req: http.IncomingMessage, res: http.ServerResponse) {
+    let serverAuthCode = await this.parseData(req);
+    log.info(serverAuthCode);
+    this.createClient(serverAuthCode);
+    let viewMode: ViewModes = this.store.get('calendarViewMode') ?? 'day';
+    res.end(JSON.stringify({ viewMode }));
+  }
+
+  async handleLogout(_: http.IncomingMessage, res: http.ServerResponse) {
+    this.mainWindow.webContents.send('onLoginChange', {
+      loggedIn: false
+    });
+    this._isLoggedIn = false;
+    res.end();
+  }
+
+  private async createClient(authToken?: string) {
     const content = await fs.readFile(
       this.getAssetPath('client-secret.json'),
       'utf-8'
     );
-
-    const { client_secret, client_id, redirect_uris } = JSON.parse(content);
-    const oAuth2Client = new google.auth.OAuth2(
-      client_id,
-      client_secret,
-      redirect_uris[1]
-    );
-
-    let token = this.store.get('googleCredentials');
-    if (token) {
-      if (token.expiry_date! <= Date.now()) {
-        token = await this.getNewToken(oAuth2Client);
+    const { client_secret, client_id } = JSON.parse(content);
+    this.oAuth2Client = new google.auth.OAuth2(client_id, client_secret, '');
+    this.oAuth2Client.on('tokens', tokens => {
+      log.info('NEW REFRESH TOKEN');
+      if (tokens.refresh_token) {
+        this.store.set('googleCredentials', prevData => ({
+          ...prevData,
+          refresh_token: tokens.refresh_token
+        }));
+      }
+    });
+    if (authToken) {
+      try {
+        let { tokens } = await this.oAuth2Client.getToken(authToken);
+        this.login(tokens);
+      } catch (error) {
+        log.error(error);
+        this.login();
       }
     } else {
-      token = await this.getNewToken(oAuth2Client);
+      this.login();
     }
-    oAuth2Client.setCredentials(token);
-    this.oAuth2Client = oAuth2Client;
-    this.calendarAPI = google.calendar({ version: 'v3', auth: oAuth2Client });
-    try {
-      this.setupIPC();
-    } catch (err) {
-      console.error('IPCs already created');
+  }
+
+  async login(newCreds?: Credentials) {
+    log.info('LOGGING IN ');
+    if (!this.isIpcSetup) this.setupIPC();
+    if (newCreds) {
+      this.store.set('googleCredentials', newCreds);
     }
-    this.mainWindow.webContents.send('onLogin', {
+    let token = newCreds || this.store.get('googleCredentials');
+    log.info(token, token?.expiry_date! >= Date.now());
+
+    if (!token) {
+      return;
+    }
+    this.oAuth2Client.setCredentials(token);
+    this.calendarAPI = google.calendar({
+      version: 'v3',
+      auth: this.oAuth2Client
+    });
+    this._isLoggedIn = true;
+    this.mainWindow.webContents.send('onLoginChange', {
       loggedIn: true
     });
   }
@@ -154,6 +148,8 @@ class GoogleAPI {
   }
 
   private setupIPC() {
+    log.info('setting up IPCs');
+    this.isIpcSetup = true;
     ipcMain.handle('getData', async () => {
       const res = (
         await this.calendarAPI?.calendarList.list({

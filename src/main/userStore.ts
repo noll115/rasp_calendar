@@ -21,15 +21,23 @@ export class UserStore {
   get<K extends keyof StoreData>(key: K): StoreData[K] {
     return this.data[key];
   }
-  set<K extends keyof StoreData>(key: K, data: StoreData[K]) {
-    this.data[key] = data;
+  set<K extends keyof StoreData>(
+    key: K,
+    data: StoreData[K] | ((data: StoreData[K]) => StoreData[K])
+  ) {
+    if (typeof data === 'function') {
+      this.data[key] = data(this.data[key]);
+    } else {
+      this.data[key] = data;
+    }
     writeFileSync(this.path, JSON.stringify(this.data));
   }
+
   private parseDataFile(): StoreData {
     try {
       return JSON.parse(readFileSync(this.path, 'utf-8'));
     } catch (err) {
-      return { syncTokens: {} };
+      return { syncTokens: {}, calendarViewMode: 'month' };
     }
   }
 }

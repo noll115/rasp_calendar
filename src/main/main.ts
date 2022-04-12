@@ -15,9 +15,9 @@ import { app, BrowserWindow } from 'electron';
 import { autoUpdater } from 'electron-updater';
 import log from 'electron-log';
 import { resolveHtmlPath } from './util';
-import googleAPI from './googleAPI';
 import { UserStore } from './userStore';
-import './bluetoothAdapter';
+import CalendarServer from './calendarServer';
+
 export default class AppUpdater {
   constructor() {
     log.transports.file.level = 'info';
@@ -74,7 +74,7 @@ const createWindow = async () => {
     }
   });
   const store = new UserStore('userData');
-
+  new CalendarServer(mainWindow, store, getAssetPath);
   mainWindow.loadURL(resolveHtmlPath('index.html'));
 
   mainWindow.on('ready-to-show', () => {
@@ -86,7 +86,6 @@ const createWindow = async () => {
     } else {
       mainWindow.show();
     }
-    new googleAPI(mainWindow, store, getAssetPath);
   });
 
   mainWindow.on('closed', () => {

@@ -4,15 +4,21 @@ import {
   getMonthData,
   removeEventFromCalendar
 } from 'renderer/util';
-import { CalendarColors, Calendars, Event } from '../../../types/index';
+import {
+  CalendarColors,
+  Calendars,
+  Event,
+  ViewModes
+} from '../../../types/index';
 import './calendar.scss';
 import { MonthView } from '../../components';
 import { TimeDisplay } from 'renderer/components/TimeDisplay';
 import { DayView } from 'renderer/components/DayView';
+import { useHistory } from 'react-router';
 
 enum Views {
-  MONTH,
-  DAY
+  MONTH = 'month',
+  DAY = 'day'
 }
 
 const syncInterval = 1000 * 60 * 0.5;
@@ -47,7 +53,7 @@ const getData = async () => {
 const CalendarPage: React.FC = () => {
   const [calendars, setCalendars] = useState<Calendars>({});
   const [currentDate, setCurrentDate] = useState(new Date());
-  const [currentView, _] = useState(Views.DAY);
+  const [currentView, setCurrentView] = useState<ViewModes>(Views.DAY);
   const monthData = useMemo(
     () => getMonthData(currentDate.getFullYear(), currentDate.getMonth()),
     [currentDate.getFullYear(), currentDate.getMonth()]
@@ -56,6 +62,30 @@ const CalendarPage: React.FC = () => {
     calendar: {},
     event: {}
   });
+  let history = useHistory();
+
+  useEffect(() => {
+    let remove = window.api.onCalendarAction((_, action) => {
+      console.log(action);
+      switch (action.type) {
+        case 'changeView':
+          console.log('new View');
+          setCurrentView(action.body.viewMode);
+          break;
+        default:
+          break;
+      }
+    });
+    let unSub = window.api.onLoginChange((_, newState) => {
+      if (!newState.loggedIn) {
+        history.push('/');
+      }
+    });
+    return () => {
+      unSub();
+      remove();
+    };
+  }, []);
 
   useEffect(() => {
     let timer: NodeJS.Timer;
@@ -136,6 +166,7 @@ const CalendarPage: React.FC = () => {
     },
     [calendarColors, calendars]
   );
+
   let title = null;
   if (currentView === Views.DAY) {
     title = `${monthData.name} ${currentDate.getDate()}, ${currentDate
@@ -144,6 +175,7 @@ const CalendarPage: React.FC = () => {
   } else {
     title = `${monthData.name} ${currentDate.getFullYear().toString()}`;
   }
+
   return (
     <div className="calendar">
       <div className="calendar-header">
