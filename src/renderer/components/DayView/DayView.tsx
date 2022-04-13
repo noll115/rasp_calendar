@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
-import { Calendars, DayData, Event } from 'types';
+import { Calendars, DayData, Event, getEventColorFunc } from 'types';
+import { AllDayEvents } from './AllDayEvents';
 import './day-view.scss';
 import { DayDescription } from './DayDescription';
 import { EventGrid } from './EventGrid';
@@ -15,7 +16,7 @@ for (const postFix of ['am', 'pm']) {
 interface Props {
   calendars: Calendars;
   time: Date;
-  getEventColor(colorId: Event): string;
+  getEventColor: getEventColorFunc;
 }
 
 const DayView: React.FC<Props> = ({ calendars, time, getEventColor }) => {
@@ -53,7 +54,8 @@ const DayView: React.FC<Props> = ({ calendars, time, getEventColor }) => {
     endOfDay.setHours(23, 59, 59, 999);
     setDayData({
       startOfDay: startOfDay.getTime(),
-      endOfDay: endOfDay.getTime()
+      endOfDay: endOfDay.getTime(),
+      dayName: startOfDay.toLocaleDateString('en-US', { weekday: 'long' })
     });
   }, [date, calendars]);
 
@@ -64,17 +66,26 @@ const DayView: React.FC<Props> = ({ calendars, time, getEventColor }) => {
   return (
     <div className="day-view">
       <div className="events-presentation">
-        <div className="day-name">Tuesday</div>
+        <div className="day-name">{dayData.dayName}</div>
+        <AllDayEvents
+          events={events}
+          time={time}
+          getEventColor={getEventColor}
+        />
         <div className="events-grid">
           <div className="hours">
             {hrs.map(hr => (
-              <div className="hour-wrap">
+              <div className="hour-wrap" key={hr}>
                 <div className="hour">{hr}</div>
               </div>
             ))}
           </div>
           {hrs.map((_, i) => (
-            <div className="horizontal" style={{ gridRow: i + 1 }}></div>
+            <div
+              className="horizontal"
+              key={i}
+              style={{ gridRow: i + 1 }}
+            ></div>
           ))}
           <div className="vertical">
             <div></div>

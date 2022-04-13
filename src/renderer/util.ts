@@ -51,6 +51,7 @@ const createEvent = (
   currentMonth?: number
 ) => {
   let newEvent: Event;
+  console.log(eventJSON);
   if (isFullDayEvent(eventJSON)) {
     const startDate = new Date(eventJSON.start.date);
     if (currentMonth && currentMonth !== startDate.getMonth()) {

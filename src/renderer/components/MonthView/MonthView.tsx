@@ -17,7 +17,7 @@ interface Props {
   monthData: { numOfDays: number; firstDay: number; name: string };
   calendars: Calendars;
   currentDate: Date;
-  getEventColor(event: Event): string;
+  getEventColor(event: Event): [string, string];
 }
 
 const MonthView: React.FC<Props> = ({
@@ -28,14 +28,18 @@ const MonthView: React.FC<Props> = ({
 }) => {
   let monthStart = false;
   let res: JSX.Element[] = [];
+  let date = 1;
   for (let i = 0; i < 7 * 5; i++) {
-    if (i === monthData.firstDay || (monthStart && i <= monthData.numOfDays)) {
+    if (
+      i === monthData.firstDay ||
+      (monthStart && date <= monthData.numOfDays)
+    ) {
       monthStart = true;
-      const isCurrentDay = i === currentDate.getDate();
+      const isCurrentDay = date === currentDate.getDate();
       res.push(
         <Day
           key={i}
-          date={i}
+          date={date++}
           isCurrentDay={isCurrentDay}
           calendars={calendars}
           getEventColor={getEventColor}

@@ -1,12 +1,12 @@
 import React from 'react';
 import { getEventStatus, getTimeRangeText } from 'renderer/util';
-import { DayData, Event, EventDateTime } from 'types';
+import { DayData, Event, EventDateTime, getEventColorFunc } from 'types';
 
 interface Props {
   events: Event[];
   time: Date;
   dayData: DayData;
-  getEventColor(event: Event): string;
+  getEventColor: getEventColorFunc;
 }
 
 const EventGrid: React.FC<Props> = ({
@@ -53,7 +53,7 @@ const EventGrid: React.FC<Props> = ({
       const endPos = 100 - (endTime / dayEndTime) * 100;
       const numOfHalfHrs = (endTime - startTime) / halfHr;
       const status = getEventStatus(event, time);
-      const backgroundColor = getEventColor(event);
+      const [backgroundColor, _] = getEventColor(event);
       const gridColumn =
         eventRow.length === 1 ? undefined : `${i + 1}/${i + 1}`;
       eventDivs.push(

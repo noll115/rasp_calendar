@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { getEventStatus, getTimeText } from 'renderer/util';
-import { Calendars, Event } from 'types';
+import { Calendars, Event, getEventColorFunc } from 'types';
 import './day.scss';
 
 const getEventText = (event: Event) => {
@@ -23,7 +23,7 @@ interface Props {
   calendars?: Calendars;
   isCurrentDay?: boolean;
   time: Date;
-  getEventColor(colorId: Event): string;
+  getEventColor: getEventColorFunc;
 }
 const _Day: React.FC<Props> = ({
   date,
@@ -71,7 +71,7 @@ const _Day: React.FC<Props> = ({
   let eventDivs =
     calendars &&
     daysEvents.map((evnt, i) => {
-      let backgroundColor = getEventColor(evnt);
+      let [backgroundColor, _] = getEventColor(evnt);
       const status = getEventStatus(evnt, time);
       return (
         <div

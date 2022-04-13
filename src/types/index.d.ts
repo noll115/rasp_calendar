@@ -64,6 +64,7 @@ export type EventDate = EventBase & EventDateBase;
 export type EventDateTime = EventBase & EventDateTimeBase;
 export type Event = EventBase & (EventDateTimeBase | EventDateBase);
 
+export type getEventColorFunc = (colorId: Event) => [string, string];
 export interface EventsByDate {
   [index: number]: Event[];
 }
@@ -119,6 +120,7 @@ export interface StoreData {
 export interface DayData {
   startOfDay: number;
   endOfDay: number;
+  dayName: string;
 }
 
 export type CalendarActions = 'changeView' | 'refresh';

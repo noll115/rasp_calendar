@@ -8,6 +8,7 @@ import {
   CalendarColors,
   Calendars,
   Event,
+  getEventColorFunc,
   ViewModes
 } from '../../../types/index';
 import './calendar.scss';
@@ -116,6 +117,7 @@ const CalendarPage: React.FC = () => {
                 if (eventJSON.status === 'cancelled') {
                   dirty = removeEventFromCalendar(eventJSON.id!, newCalendar);
                 } else {
+                  console.log(eventJSON, calendarId, newDate.getMonth());
                   const newEvent = createEvent(
                     eventJSON,
                     calendarId,
@@ -158,22 +160,35 @@ const CalendarPage: React.FC = () => {
     };
   }, []);
 
-  const getEventColor = useCallback(
+  const getEventColor = useCallback<getEventColorFunc>(
     (event: Event) => {
-      return event.colorId
+      let background = event.colorId
         ? calendarColors.event[event.colorId].background!
         : calendars[event.calendarId].backgroundColor!;
+      let foreground = event.colorId
+        ? calendarColors.event[event.colorId].foreground!
+        : calendars[event.calendarId].foregroundColor!;
+      return [background, foreground];
     },
     [calendarColors, calendars]
   );
 
   let title = null;
   if (currentView === Views.DAY) {
-    title = `${monthData.name} ${currentDate.getDate()}, ${currentDate
-      .getFullYear()
-      .toString()}`;
+    title = (
+      <span>
+        <span className="calendar-header-date">
+          {monthData.name} {currentDate.getDate()}
+        </span>
+        , {currentDate.getFullYear().toString()}
+      </span>
+    );
   } else {
-    title = `${monthData.name} ${currentDate.getFullYear().toString()}`;
+    title = (
+      <span>
+        {monthData.name} {currentDate.getFullYear().toString()}
+      </span>
+    );
   }
 
   return (
