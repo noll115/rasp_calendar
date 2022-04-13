@@ -54,7 +54,7 @@ const MonthView: React.FC<Props> = ({
   }
 
   return (
-    <span className="grid">
+    <div className="grid">
       <div className="top-row">
         {days.map((day, i) => (
           <span className="day-name" key={i}>
@@ -63,7 +63,7 @@ const MonthView: React.FC<Props> = ({
         ))}
       </div>
       {res}
-    </span>
+    </div>
   );
 };
 

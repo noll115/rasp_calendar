@@ -1,8 +1,18 @@
 @import '../../constants.scss';
 .day-view {
   display: flex;
-  height: calc(100% - 20px);
-  margin-top: 10px;
+  flex: 1;
+  width: 100%;
+  animation: fadeIn 2s;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
 }
 
 .events-presentation {
@@ -18,7 +28,7 @@
 .events-grid {
   flex-grow: 1;
   display: grid;
-  grid-template-rows: repeat(24, 1fr);
+  grid-template-rows: repeat(25, 1fr);
   grid-template-columns: 55px 1fr 1fr;
   padding: 0 0 10px 0;
   .hours {
@@ -26,7 +36,7 @@
     grid-row: 1/-1;
     font-size: 12px;
     display: grid;
-    grid-template-rows: repeat(24, 1fr);
+    grid-template-rows: repeat(25, 1fr);
     grid-template-columns: 1fr;
     padding-right: 15px;
     .hour-wrap {
@@ -134,7 +144,6 @@
       width: 1px;
       height: 100%;
       background-color: grey;
-      bottom: -1%;
       position: absolute;
       left: 0;
     }
@@ -164,6 +173,11 @@
   .events {
     max-height: calc(100% - 1.5em - 20px);
   }
+
+  .future-event {
+    overflow: hidden;
+  }
+
   .event {
     flex: 1;
     border-radius: 10px;
@@ -222,7 +236,7 @@
   }
 
   &.no-events {
-    font-size: 3rem;
+    font-size: 200%;
     align-items: center;
     justify-content: center;
   }

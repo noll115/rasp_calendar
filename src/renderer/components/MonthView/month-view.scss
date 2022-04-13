@@ -2,17 +2,17 @@
 
 .grid {
   display: grid;
+  flex: 1;
+  min-height: 0;
+  width: 100%;
   border-radius: 10px;
   overflow: hidden;
   gap: 1px;
   background-color: $outline;
-  border: 1px $black-color solid;
   grid-template-columns: repeat(7, 1fr);
   grid-template-rows: max-content repeat(5, 1fr);
-  height: calc(100% - 4rem);
-  box-shadow: 1px 8px 31px -2px rgba(0, 0, 0, 0.59);
-  -webkit-box-shadow: 1px 8px 31px -2px rgba(0, 0, 0, 0.59);
-  -moz-box-shadow: 1px 8px 31px -2px rgba(0, 0, 0, 0.59);
+  animation: fadeIn 2s;
+
   .top-row {
     grid-column: 1 / span 7;
     gap: 1px;
@@ -26,5 +26,14 @@
     .day-name {
       background-color: $base-color;
     }
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
   }
 }

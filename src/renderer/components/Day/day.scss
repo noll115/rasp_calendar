@@ -47,7 +47,6 @@
       text-overflow: ellipsis;
       white-space: nowrap;
       border-radius: 0.2rem;
-      animation: fadeIn 1s forwards;
       display: flex;
       align-items: center;
       .time {
@@ -58,29 +57,11 @@
       }
       &.passed {
         text-decoration: line-through;
-        animation: fadeInPassed 1s forwards;
+        opacity: 0.4;
       }
       &.current {
         border: $black-color solid 1px;
       }
     }
-  }
-}
-
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-  }
-  to {
-    opacity: 1;
-  }
-}
-
-@keyframes fadeInPassed {
-  from {
-    opacity: 0;
-  }
-  to {
-    opacity: 0.4;
   }
 }

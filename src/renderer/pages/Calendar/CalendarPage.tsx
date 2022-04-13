@@ -55,6 +55,7 @@ const CalendarPage: React.FC = () => {
   const [calendars, setCalendars] = useState<Calendars>({});
   const [currentDate, setCurrentDate] = useState(new Date());
   const [currentView, setCurrentView] = useState<ViewModes>(Views.DAY);
+  const [isLoading, setIsLoading] = useState(true);
   const monthData = useMemo(
     () => getMonthData(currentDate.getFullYear(), currentDate.getMonth()),
     [currentDate.getFullYear(), currentDate.getMonth()]
@@ -97,6 +98,7 @@ const CalendarPage: React.FC = () => {
       ]);
       setCalendars(calendars);
       setCalendarColors(calendarColors);
+      setIsLoading(false);
       timer = setInterval(async () => {
         let newCalendarEvents = await window.api.getEventRefresh();
         const newDate = new Date();
@@ -189,6 +191,10 @@ const CalendarPage: React.FC = () => {
         {monthData.name} {currentDate.getFullYear().toString()}
       </span>
     );
+  }
+
+  if (isLoading) {
+    return <div></div>;
   }
 
   return (
