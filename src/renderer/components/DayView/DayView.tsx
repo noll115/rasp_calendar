@@ -1,9 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import { Calendars, DayData, Event, getEventColorFunc } from 'types';
 import { AllDayEvents } from './AllDayEvents';
-import './day-view.scss';
 import { DayDescription } from './DayDescription';
 import { EventGrid } from './EventGrid';
+import './day-view.scss';
 
 const hrs: string[] = [];
 for (const postFix of ['am', 'pm']) {
@@ -20,9 +20,18 @@ interface Props {
 }
 
 const DayView: React.FC<Props> = ({ calendars, time, getEventColor }) => {
-  const [events, setEvents] = useState<Event[] | null>(null);
-  const [dayData, setDayData] = useState<DayData | null>(null);
-  const date = time.getDate();
+  const [events, setEvents] = useState<Event[]>([]);
+
+  const startOfDay = new Date(time);
+  startOfDay.setHours(0, 0, 0, 0);
+  const endOfDay = new Date(time);
+  endOfDay.setHours(23, 59, 59, 999);
+  let dayData: DayData = {
+    startOfDay: startOfDay.getTime(),
+    endOfDay: endOfDay.getTime(),
+    dayName: startOfDay.toLocaleDateString('en-US', { weekday: 'long' })
+  };
+
   useEffect(() => {
     const events: Event[] = [];
     for (const calId in calendars) {
@@ -48,20 +57,7 @@ const DayView: React.FC<Props> = ({ calendars, time, getEventColor }) => {
       return a.start.dateTime.getTime() - b.start.dateTime.getTime();
     });
     setEvents(events);
-    const startOfDay = new Date(time);
-    startOfDay.setHours(0, 0, 0, 0);
-    const endOfDay = new Date(time);
-    endOfDay.setHours(23, 59, 59, 999);
-    setDayData({
-      startOfDay: startOfDay.getTime(),
-      endOfDay: endOfDay.getTime(),
-      dayName: startOfDay.toLocaleDateString('en-US', { weekday: 'long' })
-    });
-  }, [date, calendars]);
-
-  if (!dayData || !events) {
-    return null;
-  }
+  }, [time.getDate(), calendars]);
 
   return (
     <div className="day-view">

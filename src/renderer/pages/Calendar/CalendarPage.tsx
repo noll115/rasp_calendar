@@ -16,7 +16,7 @@ import { MonthView } from '../../components';
 import { TimeDisplay } from 'renderer/components/TimeDisplay';
 import { DayView } from 'renderer/components/DayView';
 import { useHistory } from 'react-router';
-
+import { CSSTransition, SwitchTransition } from 'react-transition-group';
 enum Views {
   MONTH = 'month',
   DAY = 'day'
@@ -204,20 +204,30 @@ const CalendarPage: React.FC = () => {
         <TimeDisplay date={currentDate} />
       </div>
       <div className="calendar-body">
-        {currentView === Views.MONTH ? (
-          <MonthView
-            getEventColor={getEventColor}
-            calendars={calendars}
-            currentDate={currentDate}
-            monthData={monthData}
-          />
-        ) : (
-          <DayView
-            calendars={calendars}
-            time={currentDate}
-            getEventColor={getEventColor}
-          />
-        )}
+        <SwitchTransition>
+          <CSSTransition
+            key={currentView}
+            classNames="fade"
+            addEndListener={(node, done) => {
+              node.addEventListener('transitionend', done, false);
+            }}
+          >
+            {currentView === Views.MONTH ? (
+              <MonthView
+                getEventColor={getEventColor}
+                calendars={calendars}
+                currentDate={currentDate}
+                monthData={monthData}
+              />
+            ) : (
+              <DayView
+                calendars={calendars}
+                time={currentDate}
+                getEventColor={getEventColor}
+              />
+            )}
+          </CSSTransition>
+        </SwitchTransition>
       </div>
     </div>
   );

@@ -11,7 +11,6 @@
   background-color: $outline;
   grid-template-columns: repeat(7, 1fr);
   grid-template-rows: max-content repeat(5, 1fr);
-  animation: fadeIn 2s;
 
   .top-row {
     grid-column: 1 / span 7;
@@ -26,14 +25,5 @@
     .day-name {
       background-color: $base-color;
     }
-  }
-}
-
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-  }
-  to {
-    opacity: 1;
   }
 }
