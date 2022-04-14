@@ -20,7 +20,6 @@
   display: grid;
   grid-template-rows: repeat(25, 1fr);
   grid-template-columns: 55px 1fr 1fr;
-  padding: 0 0 10px 0;
   .hours {
     grid-column: 1;
     grid-row: 1/-1;
