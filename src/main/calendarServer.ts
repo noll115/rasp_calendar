@@ -1,17 +1,18 @@
-import http from 'http';
 import log from 'electron-log';
 import { BrowserWindow, ipcMain } from 'electron';
 import { UserStore } from './userStore';
-import { CalendarAction } from '../types';
+import { CalendarAction, SocketServer } from '../types';
 import GoogleAPI from './googleAPI';
 import ip from 'ip';
+import { Server } from 'socket.io';
+import { createServer } from 'http';
 
 const PORT = 4040;
 
 class CalendarServer {
   mainWindow: BrowserWindow;
   store: UserStore;
-  server!: http.Server;
+  server!: SocketServer;
   googleAPI: GoogleAPI;
   getAssetPath: (path: string) => string;
   ipAddr: string;
@@ -35,52 +36,32 @@ class CalendarServer {
     this.startServer();
   }
 
-  private parseData(req: http.IncomingMessage) {
-    return new Promise<CalendarAction>(res => {
-      const chunks: Uint8Array[] = [];
-      req.on('data', chunk => chunks.push(chunk));
-      req.on('end', () => {
-        let jsonData: CalendarAction = JSON.parse(
-          Buffer.concat(chunks).toString()
-        );
-        res(jsonData);
-      });
-    });
-  }
-
-  private async handleRequest(
-    req: http.IncomingMessage,
-    res: http.ServerResponse
-  ) {
-    let data = await this.parseData(req);
-    log.info(data);
-    switch (data.type) {
+  private handleAction(action: CalendarAction) {
+    log.info(action);
+    switch (action.type) {
       case 'changeView':
-        this.store.set('calendarViewMode', data.body.viewMode);
+        this.store.set('calendarViewMode', action.body.viewMode);
         break;
     }
-    this.mainWindow.webContents.send('onCalendarAction', data);
-    res.end();
+    this.mainWindow.webContents.send('onCalendarAction', action);
   }
 
   private startServer() {
-    this.server = http.createServer((req, res) => {
-      log.info(req.url);
-      switch (req.url) {
-        case '/action':
-          this.handleRequest(req, res);
-          break;
-        case '/login':
-          this.googleAPI.handleUserLogin(req, res);
-          break;
-        case '/logout':
-          this.googleAPI.handleLogout(req, res);
-          break;
-        default:
-          res.writeHead(400).end();
+    const httpServer = createServer();
+    this.server = new Server(httpServer, { serveClient: false });
+    this.server.on('connection', socket => {
+      let authToken = socket.handshake.auth.token as string | null;
+
+      if (!this.googleAPI.isLoggedIn && authToken) {
+        this.googleAPI.handleUserLogin(authToken);
+        let viewMode = this.store.get('calendarViewMode') ?? 'month';
+        socket.emit('newViewMode', viewMode);
       }
+      socket.on('action', this.handleAction);
+      socket.on('logout', this.googleAPI.handleLogout);
     });
-    this.server.listen(PORT, () => {
+
+    httpServer.listen(PORT, () => {
       log.log(`listening to ${this.ipAddr}:${PORT}`);
     });
   }

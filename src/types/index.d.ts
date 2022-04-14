@@ -1,6 +1,7 @@
 import { IpcRendererEvent } from 'electron';
 import { Credentials } from 'google-auth-library';
 import { calendar_v3 } from 'googleapis';
+export { SocketServer } from './socketIO';
 declare global {
   interface Window {
     api: API;

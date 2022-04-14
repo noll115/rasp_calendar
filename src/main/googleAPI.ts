@@ -1,11 +1,9 @@
 import fs from 'fs/promises';
 import { calendar_v3, google } from 'googleapis';
-import http from 'http';
 import log from 'electron-log';
-// import { URL } from 'url';
 import { BrowserWindow, ipcMain } from 'electron';
 import { Credentials, OAuth2Client } from 'google-auth-library';
-import { CalendarJSON, EventJson, ViewModes } from '../types';
+import { CalendarJSON, EventJson } from '../types';
 import { UserStore } from './userStore';
 
 class GoogleAPI {
@@ -30,31 +28,16 @@ class GoogleAPI {
     return this._isLoggedIn;
   }
 
-  private parseData(req: http.IncomingMessage) {
-    return new Promise<any>(res => {
-      const chunks: Uint8Array[] = [];
-      req.on('data', chunk => chunks.push(chunk));
-      req.on('end', () => {
-        let jsonData: any = JSON.parse(Buffer.concat(chunks).toString());
-        res(jsonData);
-      });
-    });
+  async handleUserLogin(authToken: string) {
+    log.info(authToken);
+    await this.createClient(authToken);
   }
 
-  async handleUserLogin(req: http.IncomingMessage, res: http.ServerResponse) {
-    let serverAuthCode = await this.parseData(req);
-    log.info(serverAuthCode);
-    this.createClient(serverAuthCode);
-    let viewMode: ViewModes = this.store.get('calendarViewMode') ?? 'day';
-    res.end(JSON.stringify({ viewMode }));
-  }
-
-  async handleLogout(_: http.IncomingMessage, res: http.ServerResponse) {
+  handleLogout() {
     this.mainWindow.webContents.send('onLoginChange', {
       loggedIn: false
     });
     this._isLoggedIn = false;
-    res.end();
   }
 
   private async createClient(authToken?: string) {
@@ -86,7 +69,7 @@ class GoogleAPI {
     }
   }
 
-  async login(newCreds?: Credentials) {
+  private async login(newCreds?: Credentials) {
     log.info('LOGGING IN ');
     if (!this.isIpcSetup) this.setupIPC();
     if (newCreds) {
