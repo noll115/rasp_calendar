@@ -37,7 +37,6 @@ class CalendarServer {
   }
 
   private handleAction(action: CalendarAction) {
-    log.info(action);
     switch (action.type) {
       case 'changeView':
         this.store.set('calendarViewMode', action.body.viewMode);
@@ -48,22 +47,36 @@ class CalendarServer {
 
   private startServer() {
     const httpServer = createServer();
-    this.server = new Server(httpServer, { serveClient: false });
+    this.server = new Server(httpServer, {
+      serveClient: false,
+      allowUpgrades: true
+    });
     this.server.on('connection', socket => {
-      let authToken = socket.handshake.auth.token as string | null;
+      log.info('SOCKET CONNECT');
+      let authToken = socket.handshake.auth.token as string;
 
-      if (!this.googleAPI.isLoggedIn && authToken) {
-        this.googleAPI.handleUserLogin(authToken);
-        let viewMode = this.store.get('calendarViewMode') ?? 'month';
-        socket.emit('newViewMode', viewMode);
-      }
-      socket.on('action', this.handleAction);
-      socket.on('logout', this.googleAPI.handleLogout);
+      this.googleAPI.handleUserLogin(authToken);
+      let viewMode = this.store.get('calendarViewMode') ?? 'month';
+      socket.emit('newViewMode', viewMode);
+      socket.on('action', action => {
+        this.handleAction(action);
+      });
+      socket.on('logout', () => {
+        socket.disconnect();
+        this.googleAPI.handleLogout();
+      });
+      socket.on('disconnect', () => {
+        console.log('SOCKET DISCONNECTED');
+      });
     });
 
     httpServer.listen(PORT, () => {
       log.log(`listening to ${this.ipAddr}:${PORT}`);
     });
+  }
+
+  public closeServer() {
+    this.server.close();
   }
 }
 

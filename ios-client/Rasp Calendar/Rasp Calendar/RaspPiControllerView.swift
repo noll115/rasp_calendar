@@ -25,14 +25,25 @@ struct RaspPiControllerView: View {
                 CalendarActionBtns
                 Spacer()
             }
-            QRButton
+            if !raspPi.isConnected {
+                QRButton
+            }
         }
+        
         .sheet(isPresented: $showCamera,onDismiss:{showCamera = false} ){
             QRCodeScannerView(showCamera: $showCamera)
         }
         .task {
             await reqCamera()
+            await raspPi.connectToRaspPi()
         }
+        .onReceive(raspPi.$socketStatus){ socketStatus in
+            if raspPi.isConnected {
+                showCamera = false
+            }
+            
+        }
+        
         
         
     }
@@ -48,9 +59,7 @@ struct RaspPiControllerView: View {
             HStack {
                 Spacer()
                 Button {
-                    Task {
-                        await raspPi.signOut()
-                    }
+                    raspPi.signOut()
                 } label: {
                     Image(systemName: "rectangle.portrait.and.arrow.right")
                         .font(.title)
@@ -63,23 +72,27 @@ struct RaspPiControllerView: View {
                 Button {
                     showCamera = true
                 } label: {
-                    Label("Scan QR Code", systemImage: "qrcode")
-                        .padding()
+                    if !raspPi.isConnecting {
+                        Label("Scan QR Code", systemImage: "qrcode").padding()
+                    } else {
+                        ProgressView().padding()
+                    }
+                    
                 }
                 .buttonStyle(.borderedProminent)
                 .clipShape(Capsule())
+                .disabled(raspPi.isConnecting)
+                
                 
             }
-
+            
         }
     }
     
     private var CalendarActionBtns: some View {
         Group{
             Button("Change view"){
-                Task {
-                    await raspPi.changeView()
-                }
+                raspPi.changeView()
             }
             .padding()
             Button("Refresh"){
@@ -90,10 +103,7 @@ struct RaspPiControllerView: View {
             .padding()
             
         }
-        .disabled(!raspPi.connected)
-        .task {
-            let _ = await raspPi.connectToRaspPi()
-        }
+        .disabled(!raspPi.isConnected)
     }
     
 }

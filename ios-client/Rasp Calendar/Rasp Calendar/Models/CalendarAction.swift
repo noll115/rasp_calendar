@@ -6,6 +6,7 @@
 //
 
 import Foundation
+import SocketIO
 
 
 enum CalendarActionType : String,Encodable {
@@ -13,9 +14,7 @@ enum CalendarActionType : String,Encodable {
     case refresh
 }
 
-
-
-protocol CalendarActionBase : Encodable {
+protocol CalendarActionBase : SocketData {
     var type: CalendarActionType {get}
 }
 
@@ -24,13 +23,22 @@ struct ChangeView : CalendarActionBase {
     var type  = CalendarActionType.changeView
     var body : Body
     
-    struct Body : Encodable {
+    struct Body : SocketData {
         var viewMode: CalendarViewModes
+        func socketRepresentation() throws -> SocketData {
+            return ["viewMode" : viewMode.rawValue]
+        }
     }
     
     init(_ mode : CalendarViewModes) {
         body = Body(viewMode: mode)
     }
+    
+    func socketRepresentation() throws -> SocketData {
+        let body = try! self.body.socketRepresentation()
+        return ["type": type.rawValue, "body" : body]
+    }
+    
 }
 
 struct Refresh : CalendarActionBase {

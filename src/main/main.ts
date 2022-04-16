@@ -27,7 +27,7 @@ export default class AppUpdater {
 }
 
 let mainWindow: BrowserWindow | null = null;
-
+let server: CalendarServer;
 if (process.env.NODE_ENV === 'production') {
   const sourceMapSupport = require('source-map-support');
   sourceMapSupport.install();
@@ -74,7 +74,7 @@ const createWindow = async () => {
     }
   });
   const store = new UserStore('userData');
-  new CalendarServer(mainWindow, store, getAssetPath);
+  server = new CalendarServer(mainWindow, store, getAssetPath);
   mainWindow.loadURL(resolveHtmlPath('index.html'));
 
   mainWindow.on('ready-to-show', () => {
@@ -106,6 +106,10 @@ app.on('window-all-closed', () => {
   if (process.platform !== 'darwin') {
     app.quit();
   }
+});
+
+app.on('quit', () => {
+  server.closeServer();
 });
 
 app

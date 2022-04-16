@@ -10,36 +10,14 @@ import GoogleSignIn
 @main
 struct Rasp_CalendarApp: App {
     
-    @StateObject var raspPi = RaspPi()
-    @Environment(\.scenePhase) private var scenePhase
-    
-    @Namespace var namespace
+    @StateObject var raspPi: RaspPi = RaspPi()
     
     var body: some Scene {
         WindowGroup {
-            VStack {
-                if raspPi.isLoggedIn {
-                    RaspPiControllerView(namespace: namespace)
-                } else {
-                    ContentView(namespace: namespace)
-                }
-            }
+            ContentView()
             .environmentObject(raspPi)
-            .onOpenURL{ url in
-                print("RESTORE")
-                GIDSignIn.sharedInstance.handle(url)
-            }
             .onAppear{
-                GIDSignIn.sharedInstance.restorePreviousSignIn {
-                     user, error in
-                    if error != nil || user == nil {
-                        print("NO USER")
-                    } else {
-                        raspPi.setUser(user!)
-                        print("HAD USER")
-                    }
-
-                }
+                raspPi.restoreUser()
             }
         }
         

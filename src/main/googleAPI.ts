@@ -22,25 +22,14 @@ class GoogleAPI {
     this.mainWindow = mainWindow;
     this.getAssetPath = getAssetPath;
     this.store = store;
+    this.createClient();
   }
 
   get isLoggedIn() {
     return this._isLoggedIn;
   }
 
-  async handleUserLogin(authToken: string) {
-    log.info(authToken);
-    await this.createClient(authToken);
-  }
-
-  handleLogout() {
-    this.mainWindow.webContents.send('onLoginChange', {
-      loggedIn: false
-    });
-    this._isLoggedIn = false;
-  }
-
-  private async createClient(authToken?: string) {
+  private async createClient() {
     const content = await fs.readFile(
       this.getAssetPath('client-secret.json'),
       'utf-8'
@@ -56,16 +45,25 @@ class GoogleAPI {
         }));
       }
     });
+  }
+
+  handleLogout() {
+    this.mainWindow.webContents.send('onLoginChange', {
+      loggedIn: false
+    });
+    this._isLoggedIn = false;
+  }
+
+  async handleUserLogin(authToken: string) {
     if (authToken) {
       try {
         let { tokens } = await this.oAuth2Client.getToken(authToken);
-        this.login(tokens);
-      } catch (error) {
-        log.error(error);
-        this.login();
+        await this.login(tokens);
+      } catch (err) {
+        await this.login();
       }
     } else {
-      this.login();
+      await this.login();
     }
   }
 

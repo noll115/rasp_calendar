@@ -9,27 +9,29 @@ import SwiftUI
 import GoogleSignIn
 
 struct ContentView: View {
-    
     @EnvironmentObject var raspPi: RaspPi
-    var namespace : Namespace.ID
+    @Namespace var namespace
+    @State var showControllerView = false
     
     var body: some View {
-        VStack{
-            Spacer()
-            TitleView()
-                .matchedGeometryEffect(id: "title", in: namespace,isSource: true)
-            Spacer()
-            Spacer()
-            Button{
-                raspPi.signIn(getRootViewController())
-            }label: {
-                Text("Login")
-                    .padding()
+        VStack {
+            if showControllerView{
+                RaspPiControllerView(namespace: namespace)
+            } else {
+                LoginView(namespace: namespace)
             }
-            .buttonStyle(.borderedProminent)
-            Spacer()
         }
-        
+        .onReceive(raspPi.$userStatus){ userStatus in
+            guard case .loggedIn = userStatus else {
+                withAnimation{
+                    showControllerView = false
+                }
+                return
+            }
+            withAnimation{
+                showControllerView = true
+            }
+        }
         
     }
     
@@ -39,9 +41,8 @@ struct ContentView: View {
 
 
 struct ContentView_Previews: PreviewProvider {
-    @Namespace static var namespace
     static var previews: some View {
-        ContentView(namespace: namespace)
+        ContentView()
         
     }
 }
